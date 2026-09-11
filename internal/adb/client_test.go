@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/squawk-dev/squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/model"
 )
 
 type fakeRunner struct {

@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/DRMCGT/Squawk/internal/adb"
 	"github.com/spf13/cobra"
-	"github.com/squawk-dev/squawk/internal/adb"
 )
 
 func newDevicesCmd() *cobra.Command {

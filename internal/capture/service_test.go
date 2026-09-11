@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/squawk-dev/squawk/internal/adb"
-	"github.com/squawk-dev/squawk/internal/session"
+	"github.com/DRMCGT/Squawk/internal/adb"
+	"github.com/DRMCGT/Squawk/internal/session"
 )
 
 var pngBytes = append([]byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}, []byte("image")...)

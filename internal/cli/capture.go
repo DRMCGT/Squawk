@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DRMCGT/Squawk/internal/adb"
+	"github.com/DRMCGT/Squawk/internal/capture"
+	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
-	"github.com/squawk-dev/squawk/internal/adb"
-	"github.com/squawk-dev/squawk/internal/capture"
-	"github.com/squawk-dev/squawk/internal/session"
 	"golang.org/x/term"
 )
 

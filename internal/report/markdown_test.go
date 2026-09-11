@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/squawk-dev/squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/model"
 )
 
 func writeLogcat(t *testing.T, dir, rel string, content string) {

@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/DRMCGT/Squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/report"
+	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
-	"github.com/squawk-dev/squawk/internal/model"
-	"github.com/squawk-dev/squawk/internal/report"
-	"github.com/squawk-dev/squawk/internal/session"
 )
 
 func newReportCmd() *cobra.Command {

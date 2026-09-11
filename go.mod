@@ -1,4 +1,4 @@
-module github.com/squawk-dev/squawk
+module github.com/DRMCGT/Squawk
 
 go 1.23.0
 

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/squawk-dev/squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/model"
 )
 
 // Timeouts for adb operations.

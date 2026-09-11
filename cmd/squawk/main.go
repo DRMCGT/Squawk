@@ -1,6 +1,6 @@
 package main
 
-import "github.com/squawk-dev/squawk/internal/cli"
+import "github.com/DRMCGT/Squawk/internal/cli"
 
 func main() {
 	cli.Execute()

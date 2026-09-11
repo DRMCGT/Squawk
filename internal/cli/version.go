@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/DRMCGT/Squawk/internal/version"
 	"github.com/spf13/cobra"
-	"github.com/squawk-dev/squawk/internal/version"
 )
 
 func newVersionCmd() *cobra.Command {

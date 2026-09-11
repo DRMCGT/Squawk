@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/squawk-dev/squawk/internal/adb"
-	"github.com/squawk-dev/squawk/internal/model"
-	"github.com/squawk-dev/squawk/internal/session"
+	"github.com/DRMCGT/Squawk/internal/adb"
+	"github.com/DRMCGT/Squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/session"
 )
 
 // Service coordinates captures against a session store and adb client.

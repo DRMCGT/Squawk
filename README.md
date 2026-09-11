@@ -14,17 +14,32 @@ steps, logs, or screenshots needed.
 
 ## Install
 
-Prerequisites:
+Requires `curl` and `adb` (Android SDK platform-tools) on your `PATH`, plus an
+Android emulator or device with USB debugging enabled.
 
-- Go 1.23+ (to build from source)
-- `adb` on your `PATH` (Android SDK platform-tools)
-- An Android emulator or device with USB debugging enabled
+**Linux / macOS** (installs to `~/.local/bin`, no sudo):
 
 ```bash
-go build -o squawk ./cmd/squawk
+curl -fsSL https://raw.githubusercontent.com/DRMCGT/Squawk/main/install.sh | sh
 ```
 
-Or use `make build` (builds to `dist/squawk` with version metadata).
+Pin a specific version:
+
+```bash
+SQUAWK_VERSION=v0.1.0 sh <(curl -fsSL https://raw.githubusercontent.com/DRMCGT/Squawk/main/install.sh)
+```
+
+If `~/.local/bin` is not on your `PATH`, the installer prints the line to add
+to your shell rc.
+
+**Build from source** (requires Go 1.23+):
+
+```bash
+go install github.com/DRMCGT/Squawk/cmd/squawk@latest   # needs $(go env GOPATH)/bin on PATH
+# or clone and:
+make build      # -> dist/squawk
+make install    # -> ~/.local/bin/squawk
+```
 
 ## Quick start
 
@@ -125,8 +140,9 @@ custom adb if needed.
 Build with embedded version metadata:
 
 ```bash
-make release        # cross-compiles into dist/
+make release        # builds tarballs + SHA256SUMS.txt into dist/
 ```
 
 Version, commit, and build date are injected at compile time via `-ldflags`
-and reported by `squawk version`.
+and reported by `squawk version`. Tagging a `v*` version pushes release assets
+(Linux/macOS × amd64/arm64) automatically via GitHub Actions.

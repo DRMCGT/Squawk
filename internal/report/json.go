@@ -3,7 +3,7 @@ package report
 import (
 	"encoding/json"
 
-	"github.com/squawk-dev/squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/model"
 )
 
 // JSON renders a session as an indented JSON document.

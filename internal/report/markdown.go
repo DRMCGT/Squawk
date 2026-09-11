@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/squawk-dev/squawk/internal/model"
+	"github.com/DRMCGT/Squawk/internal/model"
 )
 
 // NoteTitle builds the heading for a squawk, falling back to

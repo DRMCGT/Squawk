@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DRMCGT/Squawk/internal/adb"
+	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
-	"github.com/squawk-dev/squawk/internal/adb"
-	"github.com/squawk-dev/squawk/internal/session"
 )
 
 func newInitCmd() *cobra.Command {
