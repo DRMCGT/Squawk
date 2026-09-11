@@ -16,7 +16,7 @@ func TestCreateAndResolveActiveSession(t *testing.T) {
 		t.Fatalf("NewStore: %v", err)
 	}
 
-	sess, err := store.CreateSession("emulator-5554", 300)
+	sess, err := store.CreateSession("android", "emulator-5554", "", 300)
 	if err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}
@@ -34,8 +34,8 @@ func TestCreateAndResolveActiveSession(t *testing.T) {
 	if current.ID != sess.ID {
 		t.Fatalf("expected active session %s, got %s", sess.ID, current.ID)
 	}
-	if current.Device != "emulator-5554" {
-		t.Fatalf("unexpected device: %q", current.Device)
+	if current.Target != "emulator-5554" || current.Backend != "android" {
+		t.Fatalf("unexpected target: %+v", current)
 	}
 }
 
@@ -90,7 +90,7 @@ func TestSquawkDirectories(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewStore: %v", err)
 	}
-	sess, err := store.CreateSession("emulator-5554", 200)
+	sess, err := store.CreateSession("android", "emulator-5554", "", 200)
 	if err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}
@@ -106,7 +106,7 @@ func TestNextSquawkID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewStore: %v", err)
 	}
-	sess, err := store.CreateSession("emulator-5554", 200)
+	sess, err := store.CreateSession("android", "emulator-5554", "", 200)
 	if err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}

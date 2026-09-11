@@ -43,10 +43,10 @@ func newTestService(t *testing.T) (*Service, *session.Store) {
 	if err != nil {
 		t.Fatalf("NewStore: %v", err)
 	}
-	if _, err := store.CreateSession("emulator-5554", 200); err != nil {
+	if _, err := store.CreateSession("android", "emulator-5554", "", 200); err != nil {
 		t.Fatalf("CreateSession: %v", err)
 	}
-	return &Service{Adb: adb.NewClient(&stubRunner{shot: pngBytes, logs: []byte("log line\n")}), Store: store}, store
+	return &Service{Backend: ADBBackend(adb.NewClient(&stubRunner{shot: pngBytes, logs: []byte("log line\n")})), Store: store}, store
 }
 
 func TestCaptureSuccess(t *testing.T) {
@@ -102,7 +102,7 @@ func TestCaptureNoActiveSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewStore: %v", err)
 	}
-	svc := &Service{Adb: adb.NewClient(&stubRunner{shot: pngBytes, logs: []byte("x")}), Store: store}
+	svc := &Service{Backend: ADBBackend(adb.NewClient(&stubRunner{shot: pngBytes, logs: []byte("x")})), Store: store}
 	if _, err := svc.Capture(context.Background(), Request{}); err == nil {
 		t.Fatal("expected error for missing active session")
 	}
@@ -110,7 +110,7 @@ func TestCaptureNoActiveSession(t *testing.T) {
 
 func TestCaptureScreenshotFailureCleansUp(t *testing.T) {
 	svc, _ := newTestService(t)
-	svc.Adb = adb.NewClient(&stubRunner{err: os.ErrNotExist})
+	svc.Backend = ADBBackend(adb.NewClient(&stubRunner{err: os.ErrNotExist}))
 	if _, err := svc.Capture(context.Background(), Request{}); err == nil {
 		t.Fatal("expected capture failure")
 	}

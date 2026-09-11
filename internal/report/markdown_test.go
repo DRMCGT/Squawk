@@ -26,7 +26,8 @@ func sampleSession() *model.Session {
 	return &model.Session{
 		ID:        "20260910-143012",
 		StartedAt: now,
-		Device:    "emulator-5554",
+		Backend:   "android",
+		Target:    "emulator-5554",
 		LogLines:  200,
 		Squawks: []model.Squawk{
 			{ID: 1, CapturedAt: now.Add(time.Minute), Note: "save button unresponsive", Screenshot: "squawks/001/screenshot.png", Logcat: "squawks/001/logcat.txt"},

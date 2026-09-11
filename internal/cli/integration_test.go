@@ -62,7 +62,7 @@ func TestEndToEndWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("init: %v (stderr: %s)", err, errOut)
 	}
-	if !strings.Contains(out, "started on device emulator-5554") {
+	if !strings.Contains(out, "started on emulator-5554") {
 		t.Fatalf("init output unexpected:\n%s", out)
 	}
 

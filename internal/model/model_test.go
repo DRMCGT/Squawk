@@ -11,7 +11,8 @@ func TestSessionJSONRoundTrip(t *testing.T) {
 	in := &Session{
 		ID:        "20260910-143012",
 		StartedAt: now,
-		Device:    "emulator-5554",
+		Backend:   "android",
+		Target:    "emulator-5554",
 		LogLines:  200,
 		Squawks: []Squawk{
 			{ID: 1, CapturedAt: now.Add(time.Minute), Note: "", Screenshot: "squawks/001/screenshot.png", Logcat: "squawks/001/logcat.txt"},
@@ -27,7 +28,7 @@ func TestSessionJSONRoundTrip(t *testing.T) {
 	if err := json.Unmarshal(data, &out); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if out.ID != in.ID || out.Device != in.Device || out.LogLines != in.LogLines {
+	if out.ID != in.ID || out.Target != in.Target || out.Backend != in.Backend || out.LogLines != in.LogLines {
 		t.Fatalf("round trip mismatch: %+v", out)
 	}
 	if len(out.Squawks) != 2 {

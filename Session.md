@@ -40,20 +40,22 @@ a Chrome on localhost, mirroring the Android flow. **Status:** in progress.
 
 - [x] Write `Session.md` (this file).
 - [ ] Confirm the GitHub PAT used in Session 1 is revoked (was pasted in chat).
-- [ ] Backend abstraction: `capture.Backend` interface; adapt `adb.Client`;
+- [x] Backend abstraction: `capture.Backend` interface; adapt `adb.Client`;
       switch `capture.Service` off `*adb.Client` (Android stays green).
-- [ ] New `internal/browser` package (chromedp): tab listing via CDP
-      `/json/list`, tab screenshot with PNG validation, console +
+- [x] New `internal/browser` package (gorilla/websocket CDP client): tab
+      listing via `/json/list`, tab screenshot with PNG validation, console +
       `Runtime.exceptionThrown` log buffer honoring `--log-lines`.
-- [ ] Session + report: `Backend` (`android`/`browser`) + `Target` (serial or
-      page URL); report header shows backend + target. Keep
-      `screenshot.png`/`logcat.txt` artifact names.
-- [ ] CLI: `init --backend browser [--cdp http://localhost:9222]
-      [--tab <url-substring>]`; `capture`/`watch` inherit backend from
-      session; `devices` lists tabs for browser sessions.
-- [ ] Tests + docs: fake backend unit tests (no Chrome needed); README Chrome
-      launch line (`google-chrome --remote-debugging-port=9222`).
-- [ ] Ship: commit → push `main` → tag `v0.2.0` → confirm release assets →
+- [x] Session + report: `Backend` (`android`/`browser`) + `Target` (serial or
+      page URL) + `Endpoint` (CDP URL); report header shows backend + target.
+      Keep `screenshot.png`/`logcat.txt` artifact names.
+- [x] CLI: `init --backend browser [--cdp ...] [--tab ...]`; `capture`/`watch`
+      inherit backend from session; `devices` lists tabs for browser sessions.
+- [x] Tests + docs: fake CDP server unit tests (no Chrome needed); README
+      Chrome launch line.
+- [x] Verify against a real Chrome on localhost (E2E): headless Chrome +
+      file:// page; `init --backend browser --tab index.html`, `capture`,
+      `report` all produced a valid PNG + console/exception excerpt.
+- [x] Ship: commit → push `main` → tag `v0.2.0` → confirm release assets →
       re-run the install one-liner as proof.
 - [ ] Stretch: `init` auto-detects `~/Android/Sdk/platform-tools` before
       failing on missing adb (noted as follow-up in Session 1).

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DRMCGT/Squawk/internal/adb"
 	"github.com/DRMCGT/Squawk/internal/capture"
 	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
@@ -16,12 +15,12 @@ import (
 )
 
 func newCaptureCmd() *cobra.Command {
-	var sessionDir, device, note string
+	var sessionDir, target, note string
 	var logLines int
 
 	cmd := &cobra.Command{
 		Use:   "capture",
-		Short: "Capture a squawk: screenshot + recent logcat + note",
+		Short: "Capture a squawk: screenshot + recent logs + note",
 		Long: "Capture a squawk in the active session.\n" +
 			"Pass --note, or pipe a note via stdin, to attach context without an interactive prompt.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -32,26 +31,34 @@ func newCaptureCmd() *cobra.Command {
 				}
 				note = strings.TrimSpace(string(b))
 			}
-			return runCapture(cmd.Context(), sessionDir, device, note, logLines)
+			return runCapture(cmd.Context(), sessionDir, target, note, logLines)
 		},
 	}
 	cmd.Flags().StringVar(&sessionDir, "session-dir", "", "root directory for Squawk data (default ./.squawk)")
-	cmd.Flags().StringVar(&device, "device", "", "override the session's configured ADB device")
-	cmd.Flags().IntVar(&logLines, "log-lines", 0, "number of logcat lines to capture (default: session setting)")
+	cmd.Flags().StringVar(&target, "target", "", "override the session's configured target (device serial or tab URL)")
+	cmd.Flags().IntVar(&logLines, "log-lines", 0, "number of log lines to capture (default: session setting)")
 	cmd.Flags().StringVar(&note, "note", "", "short bug note")
 	return cmd
 }
 
-func runCapture(ctx context.Context, sessionDir, device, note string, logLines int) error {
+func runCapture(ctx context.Context, sessionDir, target, note string, logLines int) error {
 	store, err := session.NewStore(sessionDir)
 	if err != nil {
 		return err
 	}
-	svc := capture.Service{
-		Adb:   adb.NewClient(adb.NewExecRunner()),
-		Store: store,
+	sess, err := store.CurrentSession()
+	if err != nil {
+		return err
 	}
-	sq, err := svc.Capture(ctx, capture.Request{Note: note, Device: device, LogLines: logLines})
+	b, err := backendForSession(sess)
+	if err != nil {
+		return err
+	}
+	svc := capture.Service{
+		Backend: b,
+		Store:   store,
+	}
+	sq, err := svc.Capture(ctx, capture.Request{Note: note, Target: target, LogLines: logLines})
 	if err != nil {
 		return err
 	}

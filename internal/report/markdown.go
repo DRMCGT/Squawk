@@ -29,8 +29,17 @@ func Markdown(sessionDir string, sess *model.Session) ([]byte, error) {
 	b.WriteString("# Squawk Session\n\n")
 	fmt.Fprintf(&b, "- Session: `%s`\n", sess.ID)
 	fmt.Fprintf(&b, "- Started: `%s`\n", sess.StartedAt.UTC().Format(time.RFC3339))
-	if sess.Device != "" {
-		fmt.Fprintf(&b, "- Device: `%s`\n", sess.Device)
+	switch sess.Backend {
+	case model.BackendBrowser:
+		fmt.Fprintf(&b, "- Backend: `browser`\n")
+		if sess.Target != "" {
+			fmt.Fprintf(&b, "- Target: `%s`\n", sess.Target)
+		}
+	default:
+		fmt.Fprintf(&b, "- Backend: `android`\n")
+		if sess.Target != "" {
+			fmt.Fprintf(&b, "- Device: `%s`\n", sess.Target)
+		}
 	}
 
 	if len(sess.Squawks) == 0 {

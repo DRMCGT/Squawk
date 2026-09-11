@@ -70,7 +70,10 @@ func (s *Store) SquawkDir(sessionID string, squawkID int) string {
 
 // CreateSession creates a new session directory, writes session.json, and
 // atomically points the active-session pointer at it.
-func (s *Store) CreateSession(device string, logLines int) (*model.Session, error) {
+func (s *Store) CreateSession(backend, target, endpoint string, logLines int) (*model.Session, error) {
+	if backend == "" {
+		backend = model.BackendAndroid
+	}
 	if logLines <= 0 {
 		logLines = 200
 	}
@@ -86,7 +89,9 @@ func (s *Store) CreateSession(device string, logLines int) (*model.Session, erro
 	sess := &model.Session{
 		ID:        id,
 		StartedAt: now,
-		Device:    device,
+		Backend:   backend,
+		Target:    target,
+		Endpoint:  endpoint,
 		LogLines:  logLines,
 		Squawks:   []model.Squawk{},
 	}

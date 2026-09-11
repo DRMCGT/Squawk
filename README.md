@@ -43,6 +43,8 @@ make install    # -> ~/.local/bin/squawk
 
 ## Quick start
 
+### Android (default)
+
 With your emulator running:
 
 ```bash
@@ -63,22 +65,43 @@ squawk report
 cat .squawk/sessions/<SESSION>/report.md | claude -p "..."
 ```
 
+### Browser (Chrome on localhost)
+
+Launch Chrome with remote debugging enabled, then start a browser session:
+
+```bash
+google-chrome --remote-debugging-port=9222
+
+squawk init --backend browser
+squawk devices            # lists open tabs
+squawk watch
+squawk report
+```
+
+Point at a specific tab with `--tab <url-substring>` and a custom DevTools
+endpoint with `--cdp http://localhost:9222`. Captures include a screenshot of
+the tab plus recent console messages and uncaught exceptions. Same report
+format as Android.
+
 ## Commands
 
 | Command | Description |
 | --- | --- |
-| `squawk init` | Start a new session and make it the active session |
-| `squawk capture` | Capture a squawk: screenshot + recent logcat + note |
+| `squawk init` | Start a new session (Android or browser) and make it active |
+| `squawk capture` | Capture a squawk: screenshot + recent logs + note |
 | `squawk watch` | Interactive capture loop |
 | `squawk report` | Generate a Markdown or JSON report |
-| `squawk devices` | List connected Android devices |
+| `squawk devices` | List connected Android devices or browser tabs |
 | `squawk version` | Print version and build metadata |
 
 Common flags:
 
 - `--session-dir` — Squawk data root (default `./.squawk`)
-- `--device` — override the ADB device serial
-- `--log-lines` — number of logcat lines per squawk (default 200)
+- `--target` — override the session's target (device serial or tab URL)
+- `--log-lines` — number of log lines per squawk (default 200)
+- `--backend` — `android` (default) or `browser`
+- `--cdp` — Chrome DevTools base URL for browser sessions (default `http://localhost:9222`)
+- `--tab` — browser tab URL substring to test (with `init --backend browser`)
 
 `capture` accepts the note via `--note` or from stdin when piped:
 
@@ -106,7 +129,7 @@ echo "save button unresponsive" | squawk capture
 
 The active session pointer lets `capture`, `watch`, and `report` work from any
 terminal. Squawks without a note get the fallback title
-`Squawk 00N (no note)` in reports. Logcat excerpts are embedded in
+`Squawk 00N (no note)` in reports. Log excerpts are embedded in
 four-backtick Markdown fences so content containing triple backticks can't
 break the report.
 
@@ -114,11 +137,15 @@ break the report.
 
 - **`internal/adb`** — thin wrapper over the `adb` binary (devices, `screencap
   -p`, `logcat -d -t N`). No Android SDK needed.
-- **`internal/capture`** — coordinates one capture: screenshot + logcat +
-  note, persisted as artifacts, recorded in the session.
+- **`internal/browser`** — Chrome DevTools backend: open tabs, tab screenshots,
+  console + uncaught-exception logs (attaches to a running Chrome).
+- **`internal/capture`** — coordinates one capture: screenshot + logs + note,
+  persisted as artifacts, recorded in the session. A `Backend` interface
+  abstracts Android and browser sources.
 - **`internal/session`** — session directories and the `current-session`
   pointer file.
-- **`internal/report`** — renders a session to Markdown/JSON. Never calls adb.
+- **`internal/report`** — renders a session to Markdown/JSON. Never calls a
+  backend.
 - **`internal/cli`** — command wiring and user-facing errors.
 
 The capture logic is decoupled from output formatting so a future hosted layer

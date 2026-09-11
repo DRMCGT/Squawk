@@ -4,7 +4,13 @@ package model
 
 import "time"
 
-// Squawk is a single captured bug: a screenshot, a recent logcat excerpt,
+// Backend identifiers for capture sources.
+const (
+	BackendAndroid = "android"
+	BackendBrowser = "browser"
+)
+
+// Squawk is a single captured bug: a screenshot, a recent log excerpt,
 // a timestamp, and an optional tester note.
 type Squawk struct {
 	ID         int       `json:"id"`
@@ -19,9 +25,16 @@ type Squawk struct {
 type Session struct {
 	ID        string    `json:"id"`
 	StartedAt time.Time `json:"started_at"`
-	Device    string    `json:"device,omitempty"`
-	LogLines  int       `json:"log_lines"`
-	Squawks   []Squawk  `json:"squawks"`
+	// Backend is one of BackendAndroid or BackendBrowser.
+	Backend string `json:"backend,omitempty"`
+	// Target identifies what is being tested: an adb serial for android or a
+	// browser tab URL for browser.
+	Target string `json:"target,omitempty"`
+	// Endpoint is the backend's control endpoint: empty for android, or the
+	// Chrome DevTools base URL (e.g. http://localhost:9222) for browser.
+	Endpoint string   `json:"endpoint,omitempty"`
+	LogLines int      `json:"log_lines"`
+	Squawks  []Squawk `json:"squawks"`
 }
 
 // Device is a single entry from `adb devices`.

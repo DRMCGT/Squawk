@@ -7,14 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DRMCGT/Squawk/internal/adb"
 	"github.com/DRMCGT/Squawk/internal/capture"
 	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
 )
 
 func newWatchCmd() *cobra.Command {
-	var sessionDir, device string
+	var sessionDir, target string
 	var logLines int
 
 	cmd := &cobra.Command{
@@ -24,26 +23,31 @@ func newWatchCmd() *cobra.Command {
 			"Press Enter to capture (you will be prompted for an optional note), or type a note and press Enter to capture it directly.\n" +
 			"Type q and press Enter (or press Ctrl-C / close stdin) to exit.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runWatch(cmd.Context(), sessionDir, device, logLines)
+			return runWatch(cmd.Context(), sessionDir, target, logLines)
 		},
 	}
 	cmd.Flags().StringVar(&sessionDir, "session-dir", "", "root directory for Squawk data (default ./.squawk)")
-	cmd.Flags().StringVar(&device, "device", "", "override the session's configured ADB device")
-	cmd.Flags().IntVar(&logLines, "log-lines", 0, "number of logcat lines to capture (default: session setting)")
+	cmd.Flags().StringVar(&target, "target", "", "override the session's configured target (device serial or tab URL)")
+	cmd.Flags().IntVar(&logLines, "log-lines", 0, "number of log lines to capture (default: session setting)")
 	return cmd
 }
 
-func runWatch(ctx context.Context, sessionDir, device string, logLines int) error {
+func runWatch(ctx context.Context, sessionDir, target string, logLines int) error {
 	store, err := session.NewStore(sessionDir)
 	if err != nil {
 		return err
 	}
-	if _, err := store.CurrentSession(); err != nil {
+	sess, err := store.CurrentSession()
+	if err != nil {
+		return err
+	}
+	b, err := backendForSession(sess)
+	if err != nil {
 		return err
 	}
 	svc := capture.Service{
-		Adb:   adb.NewClient(adb.NewExecRunner()),
-		Store: store,
+		Backend: b,
+		Store:   store,
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -73,7 +77,7 @@ func runWatch(ctx context.Context, sessionDir, device string, logLines int) erro
 			note = strings.TrimSpace(nb)
 		}
 
-		sq, err := svc.Capture(ctx, capture.Request{Note: note, Device: device, LogLines: logLines})
+		sq, err := svc.Capture(ctx, capture.Request{Note: note, Target: target, LogLines: logLines})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "squawk: capture failed: %v\n", err)
 			continue
