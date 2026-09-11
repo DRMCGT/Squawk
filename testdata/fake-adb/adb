@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Fake adb for deterministic tests. Responds to the subset of commands Squawk
+# uses. Set SQUAWK_ADB to this script's path when testing.
+set -euo pipefail
+
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+case "${1:-}" in
+  version)
+    echo "Android Debug Bridge version 1.0.41 (fake)"
+    ;;
+  devices)
+    cat <<'EOF'
+List of devices attached
+emulator-5554	device
+EOF
+    ;;
+  -s)
+    if [[ "${2:-}" != "emulator-5554" ]]; then
+      echo "error: unknown device ${2:-}" >&2
+      exit 1
+    fi
+    case "${3:-}" in
+      exec-out)
+        if [[ "${4:-}" == "screencap" ]]; then
+          printf '\x89PNG\r\n\x1a\nfake-png-bytes-for-squawk-tests'
+        else
+          echo "error: unknown exec-out command ${4:-}" >&2
+          exit 1
+        fi
+        ;;
+      logcat)
+        cat "$SELF_DIR/../sample-logcat.txt"
+        ;;
+      *)
+        echo "error: unknown subcommand ${3:-}" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  *)
+    echo "error: unknown command ${1:-}" >&2
+    exit 1
+    ;;
+esac

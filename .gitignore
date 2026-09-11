@@ -1,0 +1,18 @@
+# Build artifacts
+/dist/
+/bin/
+/squawk
+
+# Go
+*.test
+*.out
+coverage.*
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Squawk local data
+.squawk/
