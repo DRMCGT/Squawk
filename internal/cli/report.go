@@ -36,9 +36,20 @@ func newReportCmd() *cobra.Command {
 // writes it to the session directory (or --output). It is shared by the
 // `squawk report` command and the `/report` slash command inside `watch`.
 func runReport(_ context.Context, sessionDir, sessionID, format, output string) error {
-	store, err := session.NewStore(sessionDir)
+	path, err := generateReport(sessionDir, sessionID, format, output)
 	if err != nil {
 		return err
+	}
+	fmt.Printf("squawk: report written to %s\n", path)
+	return nil
+}
+
+// generateReport is runReport without the user-facing print so the watch TUI
+// can render the result itself. It returns the path the report was written to.
+func generateReport(sessionDir, sessionID, format, output string) (string, error) {
+	store, err := session.NewStore(sessionDir)
+	if err != nil {
+		return "", err
 	}
 
 	var sess *model.Session
@@ -48,7 +59,7 @@ func runReport(_ context.Context, sessionDir, sessionID, format, output string) 
 		sess, err = store.CurrentSession()
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	format = strings.ToLower(strings.TrimSpace(format))
@@ -62,10 +73,10 @@ func runReport(_ context.Context, sessionDir, sessionID, format, output string) 
 	case "json":
 		data, err = report.JSON(sess)
 	default:
-		return fmt.Errorf("unsupported format %q; use markdown or json", format)
+		return "", fmt.Errorf("unsupported format %q; use markdown or json", format)
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if output == "" {
@@ -76,8 +87,7 @@ func runReport(_ context.Context, sessionDir, sessionID, format, output string) 
 		output = filepath.Join(store.SessionDir(sess.ID), "report"+ext)
 	}
 	if err := os.WriteFile(output, data, 0o644); err != nil {
-		return fmt.Errorf("cannot write report: %w", err)
+		return "", fmt.Errorf("cannot write report: %w", err)
 	}
-	fmt.Printf("squawk: report written to %s\n", output)
-	return nil
+	return output, nil
 }

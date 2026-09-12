@@ -10,6 +10,7 @@ import (
 	"github.com/DRMCGT/Squawk/internal/capture"
 	"github.com/DRMCGT/Squawk/internal/session"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 func newWatchCmd() *cobra.Command {
@@ -20,6 +21,7 @@ func newWatchCmd() *cobra.Command {
 		Use:   "watch",
 		Short: "Interactive capture loop: press Enter to capture, type q to quit",
 		Long: "Run an interactive capture loop against the active session.\n" +
+			"On a real terminal this opens a full-screen view; when piped it stays a plain-text loop.\n" +
 			"Press Enter to capture (you will be prompted for an optional note), or type a note and press Enter to capture it directly.\n" +
 			"Slash commands: /capture, /note <text>, /report, /help, /quit (or /q).\n" +
 			"Type q and press Enter (or press Ctrl-C / close stdin) to exit.",
@@ -51,6 +53,15 @@ func runWatch(ctx context.Context, sessionDir, target string, logLines int) erro
 		Store:   store,
 	}
 
+	if term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd())) {
+		return runWatchTUI(ctx, store, sess, svc, target, logLines)
+	}
+	return runWatchPlain(ctx, svc, sessionDir, target, logLines)
+}
+
+// runWatchPlain is the scriptable, non-TTY variant of the watch loop. It keeps
+// the original plain-text behavior so watch still works when piped.
+func runWatchPlain(ctx context.Context, svc capture.Service, sessionDir, target string, logLines int) error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("squawk watch: press Enter or /capture to capture a bug, type a note then Enter to capture with it, /note <text> for a one-line note, /report to refresh the report, /help for commands, q or /quit to exit")
 

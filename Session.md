@@ -64,3 +64,36 @@ a Chrome on localhost, mirroring the Android flow. **Status:** in progress.
 localhost, `squawk capture --note ...`, and a `report.md` with screenshot +
 console excerpt — mirroring the Session 1 demo, no code changes to the Android
 path.
+
+## Session 3 — Browser backend field-test + v0.1 polish (2026-09-11/12)
+
+**Goal:** use Squawk on a real project (CillusApp in Chrome), then polish the
+CLI for the OSS release. **Status: done.**
+
+**Field test (browser backend, real Chrome + Capacitor app on localhost:8080):**
+- 5 captures: valid PNGs + console excerpts each; `report.md` handed to a
+  coding agent — the intended loop works with no emulator.
+- Findings (accepted): browser logs are a 2s live window (re-captures without
+  a page reload replay the same page-load lines); `watch` is type-the-note
+  (two captures recorded the typed command text as the note).
+
+**Shipped in between:** banner + watch slash commands as `v0.1.1` (fix
+`vv0.1.1` double-v: `v0.1.2`), both pushed + released; install one-liner
+re-verified. PAT used for pushes was pasted in chat again — revoke it.
+
+**Session 4 — watch TUI addendum (2026-09-12, supersedes plain polish path):**
+- `squawk watch` is now a full-screen Bubble Tea + Lip Gloss TUI: block-letter
+  SQUAWK logo, session/backend/target/count status line, rounded boxed input
+  with placeholder, dim footer hint bar, async `tea.Cmd` captures with inline
+  "Capturing…"/"Writing report…" states and fading confirmations. Same command
+  set and parsing behavior as the plain loop; everything else (`init`,
+  `capture`, `report`, `devices`, `version`) stays plain text.
+- When stdin/stdout are not TTYs (piped/scripted), `watch` falls back to the
+  original plain loop — existing integration tests unchanged.
+- Deps: bubbletea v1.2.4 + lipgloss v1.0.0 (x/sys bumped to v0.27.0; go.mod
+  stays on Go 1.23 — newer charmbracelet releases require 1.24).
+- Fixed a real bubbletea input quirk in tests + live PTY: a lone Space arrives
+  as `tea.KeySpace`, not `KeyRunes` — must be handled or spaces vanish from
+  notes.
+- Verified over a real PTY (slow-adb wrapper): "Capturing…" renders while a
+  0.8s capture runs; notes with spaces persisted; report + quit paths clean.

@@ -90,7 +90,7 @@ format as Android.
 | --- | --- |
 | `squawk init` | Start a new session (Android or browser) and make it active |
 | `squawk capture` | Capture a squawk: screenshot + recent logs + note |
-| `squawk watch` | Interactive capture loop with slash commands (`/capture`, `/note <text>`, `/report`, `/help`, `/quit`) |
+| `squawk watch` | Full-screen interactive capture loop (falls back to a plain-text loop when piped) with slash commands (`/capture`, `/note <text>`, `/report`, `/help`, `/quit`) |
 | `squawk report` | Generate a Markdown or JSON report |
 | `squawk devices` | List connected Android devices or browser tabs |
 | `squawk version` | Print version and build metadata |
@@ -133,6 +133,15 @@ terminal. Squawks without a note get the fallback title
 `Squawk 00N (no note)` in reports. Log excerpts are embedded in
 four-backtick Markdown fences so content containing triple backticks can't
 break the report.
+
+## Required Libraries
+
+- `github.com/spf13/cobra` — CLI command wiring.
+- `golang.org/x/term` — terminal detection (piped vs interactive).
+- `github.com/gorilla/websocket` — Chrome DevTools Protocol transport.
+- `github.com/charmbracelet/bubbletea` + `github.com/charmbracelet/lipgloss` —
+  the full-screen `squawk watch` TUI only. The rest of the CLI stays
+  dependency-light plain text.
 
 ## Design
 
