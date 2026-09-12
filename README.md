@@ -84,6 +84,26 @@ endpoint with `--cdp http://localhost:9222`. Captures include a screenshot of
 the tab plus recent console messages and uncaught exceptions. Same report
 format as Android.
 
+## Web widget (dev-only, separate from the CLI)
+
+There is also an embeddable client-side **Squawk widget** for testing web apps
+directly in the browser: a floating button, a quick note form, optional
+click-to-pin precise location, flags persisted in `localStorage`, and a
+one-click export to a timestamped `bugs.md` file for a coding agent. No
+backend, no network calls, no screenshots.
+
+It ships as a small npm package (`widget/`, ~12KB minified, ~4.7KB gzipped)
+with an ESM build for bundlers and a plain `<script src>` build for no-bundler
+projects. See [`widget/README.md`](widget/README.md) for usage.
+
+```js
+import { mountSquawk } from "squawk-widget";
+
+if (process.env.NODE_ENV === "development") {
+  mountSquawk();
+}
+```
+
 ## Commands
 
 | Command | Description |

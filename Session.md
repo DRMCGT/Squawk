@@ -97,3 +97,55 @@ re-verified. PAT used for pushes was pasted in chat again — revoke it.
   notes.
 - Verified over a real PTY (slow-adb wrapper): "Capturing…" renders while a
   0.8s capture runs; notes with spaces persisted; report + quit paths clean.
+
+## Session 5 — Web widget MVP (2026-09-12, supersedes the Go-only CLI for the web)
+
+**Goal:** an embeddable, zero-backend bug-flagging widget for web apps
+replacing the CLI flow for the browser iteration (no screenshots, no adb, no
+CDP, no server). **Status: done.**
+
+**Built (`widget/`, standalone npm package, `squawk-widget` v0.1.0):**
+- Vanilla JS + Shadow DOM (no framework, no external runtime deps).
+- Floating "Squawk" button bottom-right → panel with note textarea + Save,
+  running flag count, recent-flag list, "Export .md", and "Clear" (confirm-gated).
+- Flags persist under `localStorage["squawk:flags"]` as `{id, note, url, timestamp}`;
+  ids are `F001`-style (max-suffix + 1). In-memory fallback if localStorage is
+  unavailable. Malformed/foreign payloads are dropped on load.
+- Export: Blob + `<a download="bugs.md">`, format per spec (first ~8 words of
+  the note become the heading; full note text preserved verbatim).
+- Builds (esbuild): ESM (`squawk.esm.js`), CJS (`squawk.cjs.js`), and plain-script
+  IIFE (`squawk.js`, exposes `window.Squawk` with `.mount()`). Minified IIFE was
+  8.4KB at v0 (10KB target); grew to ~12.4KB with pin-to-locate, gate revised
+  to 13KB (see Session 5 addendum below). Gated by `npm run check:size`.
+- Tests: 42 vitest+jsdom tests (store, markdown, download, widget interactions,
+  plus an integration test that loads the built IIFE and drives the full
+  flag → localStorage → export loop).
+- Docs: `widget/README.md` (usage, API, export format) + root README section.
+- CI: `.github/workflows/test.yml` now also builds + tests the widget.
+
+**Session 5 addendum — pre-launch polish (2026-09-12):**
+- FAB now shows a paper-airplane inline SVG (no icon library dependency).
+- Export filename is timestamped (`bugs-YYYYMMDD-HHmmss-<ms>.md`), shared with
+  the `Exported:` line and filesystem-safe; repeat exports never overwrite.
+- **Pin-to-locate:** `Pin location` arms a transparent full-page overlay that
+  intercepts the next click (never reaches the app), drops a numbered pin at
+  the spot, and anchors the note form next to it. Flags record `position`
+  (`xPercent`/`yPercent` relative to the full document + viewport size) and the
+  export gains a `- Position: …% from left, …% from top (viewport WxH)` line.
+  Pins are live-only (not redrawn across reloads); optional `position` keeps
+  plain page-level flags unchanged.
+- Bundle grew to ~12.4KB minified (~4.7KB gzipped); size gate revised to 13KB
+  to fit the added pin feature. Tests: 59 total (was 42).
+
+**Decisions:**
+- No spatial/pixel pins in v0 — plain per-page note list only; add pin
+  coordinates later only if usage shows they're missing.
+- Package name pending (likely under the Squawk brand); placeholder is
+  `squawk-widget`.
+- Manual mounting (no auto-mount side effects); ESM consumers gate on
+  `NODE_ENV === 'development'`.
+
+**Remaining / parked:**
+- Go/CLI work is parked, not deleted (still the Android + screenshot path).
+- Advanced cloud/SaaS phase (cloud sandbox, LLM-driven review) tracked
+  separately, not part of this MVP.

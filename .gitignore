@@ -16,3 +16,8 @@ coverage.*
 
 # Squawk local data
 .squawk/
+
+# Web widget (npm)
+node_modules/
+widget/coverage/
+*.log

@@ -20,3 +20,24 @@ jobs:
         run: go vet ./...
       - name: Test
         run: go test ./...
+
+  widget:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: widget
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: widget/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test
+      - name: Bundle size
+        run: npm run check:size
