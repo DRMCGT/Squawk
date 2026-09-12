@@ -5,6 +5,7 @@ const flag = (overrides = {}) => ({
   id: "F001",
   note: "save button unresponsive",
   url: "/dashboard",
+  screenLabel: "Reports",
   timestamp: "2026-09-12T21:03:00Z",
   ...overrides,
 });
@@ -14,6 +15,12 @@ const position = {
   yPercent: 0.18,
   viewportWidth: 1440,
   viewportHeight: 900,
+};
+
+const element = {
+  selector: "button.btn-primary",
+  tagName: "button",
+  textPreview: "Save changes",
 };
 
 describe("noteTitle", () => {
@@ -78,6 +85,38 @@ describe("toMarkdown", () => {
     expect(md).toContain("- Page: /dashboard");
     expect(md).toContain("- Time: 2026-09-12T21:03:00Z");
     expect(md).toContain("save button unresponsive");
+  });
+
+  it("renders the Screen line", () => {
+    const md = toMarkdown([flag({ screenLabel: "Cuánto tiempo llevas" })], new Date("2026-09-12T22:00:00Z"));
+    expect(md).toContain("- Screen: Cuánto tiempo llevas");
+  });
+
+  it("falls back to the page url when a flag has no screen label", () => {
+    const md = toMarkdown([flag({ screenLabel: undefined })], new Date("2026-09-12T22:00:00Z"));
+    expect(md).toContain("- Screen: /dashboard");
+  });
+
+  it("renders the Element line with selector and text preview", () => {
+    const md = toMarkdown([flag({ element })], new Date("2026-09-12T22:00:00Z"));
+    expect(md).toContain('- Element: `button.btn-primary` — "Save changes"');
+  });
+
+  it("omits the Element line for flags without an element", () => {
+    const md = toMarkdown([flag()], new Date("2026-09-12T22:00:00Z"));
+    expect(md).not.toContain("Element:");
+  });
+
+  it("orders Screen, Element, Page, Time lines", () => {
+    const md = toMarkdown([flag({ element })], new Date("2026-09-12T22:00:00Z"));
+    const s = md.indexOf("- Screen:");
+    const e = md.indexOf("- Element:");
+    const p = md.indexOf("- Page:");
+    const t = md.indexOf("- Time:");
+    expect(s).toBeGreaterThan(-1);
+    expect(e).toBeGreaterThan(s);
+    expect(p).toBeGreaterThan(e);
+    expect(t).toBeGreaterThan(p);
   });
 
   it("renders the Position line for positioned flags", () => {

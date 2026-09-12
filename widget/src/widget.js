@@ -1,6 +1,7 @@
 import { createStore, nextFlagId } from "./store.js";
 import { toMarkdown, exportFilename } from "./markdown.js";
 import { downloadMarkdown } from "./download.js";
+import { describeElement } from "./selector.js";
 
 const STYLES =
   ":host{all:initial}" +
@@ -16,6 +17,7 @@ const STYLES =
   ".status{margin:12px 0 8px;color:#6b7280}" +
   ".list{margin:0 0 12px;padding:0;list-style:none;max-height:180px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:8px}" +
   ".list li{padding:8px 10px;border-bottom:1px solid #f3f4f6}.list li:last-child{border-bottom:0}.list .t{font-weight:600;word-break:break-word}.list .meta{color:#6b7280;font-size:11px;margin-top:2px}.empty{color:#9ca3af}" +
+  ".file{display:flex;align-items:center;gap:6px;margin-bottom:8px}.file label{color:#6b7280;font-size:11px;flex:0 0 auto}.file input{flex:1;min-width:0;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;padding:5px 8px;font:inherit;font-size:12px}" +
   ".actions{display:flex;gap:8px}.actions button{flex:1;padding:8px 0;border:1px solid #d1d5db;border-radius:8px;background:#fff;font:inherit;font-weight:600;cursor:pointer}" +
   ".actions .active{background:#111;color:#fff;border-color:#111}.actions .active:hover{background:#000}" +
   ".actions .danger{color:#b91c1c;border-color:#fecaca}.actions .danger:hover{background:#fef2f2}.actions button:disabled{opacity:.5}";
@@ -41,15 +43,23 @@ function paperPlaneIcon() {
   return span;
 }
 
-function createPin(number) {
-  const pin = document.createElement("div");
-  pin.setAttribute("data-squawk-pin", "");
-  pin.style.cssText =
-    "position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;" +
-    "background:#e5484d;color:#fff;font:700 12px system-ui,sans-serif;display:flex;align-items:center;" +
-    "justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35);pointer-events:none";
-  pin.textContent = String(number);
-  return pin;
+function isVisible(el) {
+  const style = getComputedStyle(el);
+  return style.display !== "none" && style.visibility !== "hidden";
+}
+
+// The screen name for a flag: first visible heading, then document.title, then
+// the page path.
+function screenLabel() {
+  const headings = document.querySelectorAll("h1, h2, h3");
+  for (const h of headings) {
+    if (!isVisible(h)) continue;
+    const text = (h.textContent || "").replace(/\s+/g, " ").trim();
+    if (text) return text;
+  }
+  const title = (document.title || "").trim();
+  if (title) return title;
+  return pageUrl();
 }
 
 export function createWidget({ store, filename } = {}) {
@@ -105,13 +115,25 @@ export function createWidget({ store, filename } = {}) {
   status.className = "status";
   const list = document.createElement("ul");
   list.className = "list";
+
+  const fileRow = document.createElement("div");
+  fileRow.className = "file";
+  const fileLabel = document.createElement("label");
+  fileLabel.textContent = "Filename";
+  fileLabel.setAttribute("for", "squawk-filename");
+  const filenameInput = document.createElement("input");
+  filenameInput.type = "text";
+  filenameInput.id = "squawk-filename";
+  filenameInput.setAttribute("aria-label", "Export filename");
+  fileRow.append(fileLabel, filenameInput);
+
   const actions = document.createElement("div");
   actions.className = "actions";
-  const pinBtn = document.createElement("button");
-  pinBtn.type = "button";
-  pinBtn.className = "pin";
-  pinBtn.textContent = "Pin location";
-  pinBtn.setAttribute("title", "Click a spot on the page to flag it precisely");
+  const pickBtn = document.createElement("button");
+  pickBtn.type = "button";
+  pickBtn.className = "pick";
+  pickBtn.textContent = "Pick element";
+  pickBtn.setAttribute("title", "Hover to highlight an element, click to select it");
   const exportBtn = document.createElement("button");
   exportBtn.type = "button";
   exportBtn.textContent = "Export .md";
@@ -121,24 +143,79 @@ export function createWidget({ store, filename } = {}) {
   clearBtn.className = "danger";
   clearBtn.textContent = "Clear";
   clearBtn.disabled = true;
-  actions.append(pinBtn, exportBtn, clearBtn);
+  actions.append(pickBtn, exportBtn, clearBtn);
 
-  body.append(textarea, save, status, list, actions);
+  body.append(textarea, save, status, list, fileRow, actions);
   panel.append(head, body);
   root.append(fab, panel);
   document.body.appendChild(host);
 
-  const pinLayer = document.createElement("div");
-  pinLayer.setAttribute("data-squawk-pins", "");
-  pinLayer.style.cssText = "position:absolute;top:0;left:0;width:0;height:0;z-index:2147482500;";
-  document.body.appendChild(pinLayer);
+  const hoverBox = document.createElement("div");
+  hoverBox.setAttribute("data-squawk-highlight", "");
+  hoverBox.style.cssText =
+    "position:fixed;z-index:2147482500;display:none;pointer-events:none;box-sizing:border-box;" +
+    "background:rgba(66,133,244,.18);border:2px solid #4285f4;";
+  document.body.appendChild(hoverBox);
 
   let flags = store.load();
   let armed = false;
-  let overlay = null;
-  let pendingPosition = null;
-  let pendingPin = null;
-  let livePins = [];
+  let pendingElement = null;
+  let pendingElRef = null;
+  let highlightEl = null;
+  let filenameDirty = false;
+
+  filenameInput.value = filename || exportFilename(new Date());
+  filenameDirty = Boolean(filename);
+
+  function isWidgetEvent(event) {
+    const t = event.target;
+    if (!t) return false;
+    if (t === host || t === shadow || host.contains(t) || shadow.contains(t)) return true;
+    if (typeof event.composedPath === "function") return event.composedPath().includes(host);
+    return false;
+  }
+
+  function hideHighlight() {
+    hoverBox.style.display = "none";
+    highlightEl = null;
+  }
+
+  function showHighlight(el) {
+    const r = el.getBoundingClientRect();
+    hoverBox.style.display = "block";
+    hoverBox.style.left = `${r.left}px`;
+    hoverBox.style.top = `${r.top}px`;
+    hoverBox.style.width = `${r.width}px`;
+    hoverBox.style.height = `${r.height}px`;
+  }
+
+  function onMove(event) {
+    if (isWidgetEvent(event)) {
+      hideHighlight();
+      return;
+    }
+    const el = event.target;
+    if (!el || el.nodeType !== 1) {
+      hideHighlight();
+      return;
+    }
+    highlightEl = el;
+    showHighlight(el);
+  }
+
+  function onPick(event) {
+    if (isWidgetEvent(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    const el = event.target;
+    if (!el || el.nodeType !== 1) return;
+    pendingElRef = el;
+    pendingElement = describeElement(el);
+    disarm();
+    showHighlight(el);
+    openPanelNearEl(el);
+  }
 
   function render() {
     const n = flags.length;
@@ -163,23 +240,26 @@ export function createWidget({ store, filename } = {}) {
       t.textContent = f.note || "(no note)";
       const meta = document.createElement("div");
       meta.className = "meta";
-      const loc = f.position
-        ? `${f.id} · ${f.url} · ${Math.round(f.position.xPercent * 100)}% / ${Math.round(f.position.yPercent * 100)}%`
-        : `${f.id} · ${f.url}`;
+      const loc = f.element
+        ? `${f.id} · ${f.element.selector}`
+        : f.position
+          ? `${f.id} · ${Math.round(f.position.xPercent * 100)}% / ${Math.round(f.position.yPercent * 100)}%`
+          : `${f.id} · ${f.url}`;
       meta.textContent = `${loc} · ${new Date(f.timestamp).toLocaleString()}`;
       li.append(t, meta);
       list.appendChild(li);
     }
   }
 
-  function add(note, position) {
+  function add(note, element) {
     const flag = {
       id: nextFlagId(flags),
       note: String(note ?? "").trim(),
       url: pageUrl(),
+      screenLabel: screenLabel(),
       timestamp: new Date().toISOString(),
     };
-    if (position) flag.position = position;
+    if (element) flag.element = element;
     flags = flags.concat(flag);
     store.save(flags);
     render();
@@ -188,25 +268,23 @@ export function createWidget({ store, filename } = {}) {
 
   function saveFromInput() {
     if (!textarea.value.trim()) return;
-    add(textarea.value, pendingPosition || undefined);
+    add(textarea.value, pendingElement || undefined);
     textarea.value = "";
     save.disabled = true;
-    pendingPosition = null;
-    pendingPin = null;
+    cancelSelection();
   }
 
   function exportMarkdown() {
     if (!flags.length) return;
     const exportedAt = new Date();
-    const name = filename || exportFilename(exportedAt);
+    let name = filenameInput.value.trim();
+    if (!name) {
+      name = exportFilename(exportedAt);
+      filenameInput.value = name;
+      filenameDirty = false;
+    }
     downloadMarkdown(toMarkdown(flags, exportedAt), name);
-  }
-
-  function clearLivePins() {
-    for (const pin of livePins) pin.remove();
-    livePins = [];
-    pendingPin = null;
-    pendingPosition = null;
+    if (!filenameDirty) filenameInput.value = exportFilename(new Date());
   }
 
   function clear() {
@@ -216,14 +294,14 @@ export function createWidget({ store, filename } = {}) {
     flags = [];
     store.clear();
     disarm();
-    clearLivePins();
+    cancelSelection();
     render();
   }
 
   function setOpen(open) {
     panel.classList.toggle("open", open);
     if (!open) {
-      cancelPendingPin();
+      cancelSelection();
       resetPanelPosition();
     }
   }
@@ -234,102 +312,55 @@ export function createWidget({ store, filename } = {}) {
     panel.classList.remove("anchored");
   }
 
-  function cancelPendingPin() {
-    if (pendingPin) {
-      pendingPin.remove();
-      livePins = livePins.filter((p) => p !== pendingPin);
-      pendingPin = null;
-    }
-    pendingPosition = null;
+  function cancelSelection() {
+    pendingElement = null;
+    pendingElRef = null;
+    hideHighlight();
   }
 
   function onEscape(e) {
     if (e.key !== "Escape") return;
     if (armed) {
       disarm();
+      cancelSelection();
       return;
     }
     setOpen(false);
   }
 
-  function computePosition(clientX, clientY) {
-    const doc = document.documentElement;
-    const docW = doc.scrollWidth;
-    const docH = doc.scrollHeight;
-    const pageX = clientX + window.scrollX;
-    const pageY = clientY + window.scrollY;
-    return {
-      xPercent: docW > 0 ? clamp(pageX / docW, 0, 1) : 0,
-      yPercent: docH > 0 ? clamp(pageY / docH, 0, 1) : 0,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
-    };
-  }
-
-  function openPanelNear(clientX, clientY) {
+  function openPanelNearEl(el) {
+    const r = el.getBoundingClientRect();
     setOpen(true);
     const vw = window.innerWidth || 800;
     const vh = window.innerHeight || 600;
     const pw = 320;
     const ph = panel.offsetHeight || 300;
-    let left = clientX + 16;
-    let top = clientY - ph - 24;
-    if (left + pw > vw - 8) left = clientX - pw - 16;
-    if (top < 8) top = clientY + 16;
+    let left = r.left;
+    let top = r.top - ph - 8;
+    if (top < 8) top = r.bottom + 8;
     panel.style.left = `${clamp(left, 8, Math.max(8, vw - pw - 8))}px`;
     panel.style.top = `${clamp(top, 8, Math.max(8, vh - ph - 8))}px`;
     panel.classList.add("anchored");
     textarea.focus();
   }
 
-  function placeAt(clientX, clientY) {
-    pendingPosition = computePosition(clientX, clientY);
-    const number = parseInt(nextFlagId(flags).slice(1), 10);
-    const marker = createPin(number);
-    pinLayer.appendChild(marker);
-    const rect = pinLayer.getBoundingClientRect();
-    marker.style.left = `${clientX - rect.left}px`;
-    marker.style.top = `${clientY - rect.top}px`;
-    pendingPin = marker;
-    livePins.push(marker);
-    disarm();
-    openPanelNear(clientX, clientY);
-  }
-
   function arm() {
     if (armed) return;
     setOpen(false);
     armed = true;
-    pinBtn.textContent = "Cancel pin";
-    pinBtn.classList.add("active");
-    overlay = document.createElement("div");
-    overlay.setAttribute("data-squawk-overlay", "");
-    overlay.setAttribute("aria-label", "Squawk location picker: click anywhere on the page");
-    overlay.style.cssText =
-      "position:fixed;inset:0;z-index:2147482000;background:transparent;cursor:crosshair;";
-    const hint = document.createElement("div");
-    hint.textContent = "Click anywhere to pin · Esc to cancel";
-    hint.style.cssText =
-      "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;" +
-      "padding:6px 12px;border-radius:14px;font:600 12px system-ui,sans-serif;" +
-      "box-shadow:0 2px 8px rgba(0,0,0,.3);pointer-events:none;";
-    overlay.appendChild(hint);
-    overlay.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      placeAt(e.clientX, e.clientY);
-    });
-    document.body.appendChild(overlay);
+    pickBtn.textContent = "Cancel pick";
+    pickBtn.classList.add("active");
+    document.addEventListener("mousemove", onMove, { capture: true });
+    document.addEventListener("click", onPick, { capture: true });
   }
 
   function disarm() {
     if (!armed) return;
     armed = false;
-    overlay.remove();
-    overlay = null;
-    pinBtn.textContent = "Pin location";
-    pinBtn.classList.remove("active");
+    document.removeEventListener("mousemove", onMove, { capture: true });
+    document.removeEventListener("click", onPick, { capture: true });
+    pickBtn.textContent = "Pick element";
+    pickBtn.classList.remove("active");
   }
 
   fab.addEventListener("click", () => {
@@ -343,7 +374,10 @@ export function createWidget({ store, filename } = {}) {
   });
   close.addEventListener("click", () => setOpen(false));
   save.addEventListener("click", saveFromInput);
-  pinBtn.addEventListener("click", () => (armed ? disarm() : arm()));
+  pickBtn.addEventListener("click", () => (armed ? disarm() : arm()));
+  filenameInput.addEventListener("input", () => {
+    filenameDirty = true;
+  });
   textarea.addEventListener("input", () => {
     save.disabled = !textarea.value.trim();
   });
@@ -388,7 +422,7 @@ export function createWidget({ store, filename } = {}) {
       setOpen(false);
       disarm();
       document.removeEventListener("keydown", onEscape);
-      pinLayer.remove();
+      hoverBox.remove();
       host.remove();
     },
   };

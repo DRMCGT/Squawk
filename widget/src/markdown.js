@@ -36,6 +36,11 @@ function formatPosition(p) {
   return `- Position: ${x}% from left, ${y}% from top (viewport ${p.viewportWidth}x${p.viewportHeight})`;
 }
 
+function formatElement(e) {
+  const preview = e.textPreview ? ` — "${e.textPreview}"` : "";
+  return `- Element: \`${e.selector}\`${preview}`;
+}
+
 export function toMarkdown(flags, exportedAt = new Date()) {
   const lines = [
     "# Squawk Bug Report",
@@ -51,6 +56,8 @@ export function toMarkdown(flags, exportedAt = new Date()) {
   for (const f of flags) {
     const title = noteTitle(f.note) || "(no note)";
     lines.push("", `## ${f.id} — ${title}`);
+    lines.push(`- Screen: ${f.screenLabel || f.url || "(unknown)"}`);
+    if (f.element) lines.push(formatElement(f.element));
     lines.push(`- Page: ${f.url}`);
     lines.push(`- Time: ${f.timestamp}`);
     if (f.position) lines.push(formatPosition(f.position));

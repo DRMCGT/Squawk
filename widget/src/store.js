@@ -43,6 +43,16 @@ function isValidPosition(p) {
   );
 }
 
+function isValidElement(e) {
+  return (
+    e != null &&
+    typeof e === "object" &&
+    typeof e.selector === "string" &&
+    typeof e.tagName === "string" &&
+    typeof e.textPreview === "string"
+  );
+}
+
 function isValidFlag(f) {
   return (
     f != null &&
@@ -52,7 +62,9 @@ function isValidFlag(f) {
     typeof f.note === "string" &&
     typeof f.url === "string" &&
     typeof f.timestamp === "string" &&
-    (f.position == null || isValidPosition(f.position))
+    (f.screenLabel == null || typeof f.screenLabel === "string") &&
+    (f.position == null || isValidPosition(f.position)) &&
+    (f.element == null || isValidElement(f.element))
   );
 }
 

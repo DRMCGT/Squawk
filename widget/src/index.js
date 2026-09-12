@@ -1,6 +1,7 @@
 import { createStore, STORAGE_KEY } from "./store.js";
 import { createWidget } from "./widget.js";
-import { toMarkdown, noteTitle } from "./markdown.js";
+import { toMarkdown, noteTitle, exportFilename } from "./markdown.js";
+import { describeElement, buildSelector } from "./selector.js";
 
 export const version = "0.1.0";
 
@@ -29,4 +30,12 @@ export function mountSquawk(options = {}) {
   return active;
 }
 
-export { createStore, STORAGE_KEY, toMarkdown, noteTitle };
+export {
+  createStore,
+  STORAGE_KEY,
+  toMarkdown,
+  noteTitle,
+  exportFilename,
+  describeElement,
+  buildSelector,
+};

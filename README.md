@@ -92,7 +92,7 @@ click-to-pin precise location, flags persisted in `localStorage`, and a
 one-click export to a timestamped `bugs.md` file for a coding agent. No
 backend, no network calls, no screenshots.
 
-It ships as a small npm package (`widget/`, ~12KB minified, ~4.7KB gzipped)
+It ships as a small npm package (`widget/`, ~14.5KB minified, ~5KB gzipped)
 with an ESM build for bundlers and a plain `<script src>` build for no-bundler
 projects. See [`widget/README.md`](widget/README.md) for usage.
 

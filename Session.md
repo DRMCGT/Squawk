@@ -137,6 +137,33 @@ CDP, no server). **Status: done.**
 - Bundle grew to ~12.4KB minified (~4.7KB gzipped); size gate revised to 13KB
   to fit the added pin feature. Tests: 59 total (was 42).
 
+## Session 6 — Element picker + named export (2026-09-12)
+
+**Goal:** replace raw click coordinates with a DevTools-style element picker
+and let the tester name the export file. **Status: done.**
+
+- **Element picker** replaces the overlay/pin approach: `Pick element` arms
+  capture-phase `document` listeners for `mousemove` (blue highlight box tracks
+  the hovered DOM element via `getBoundingClientRect`, no overlay div) and
+  `click` (intercepts before app handlers, `preventDefault` +
+  `stopImmediatePropagation`, selects `event.target`). Note form anchors near
+  the selected element; Esc/Cancel clears the selection.
+- **Selector generation** (`src/selector.js`, no deps): prefer the element's
+  `#id` (or nearest ancestor id), else a short tag + class path with
+  `:nth-child()` only when siblings are ambiguous; `textPreview` = first ~50
+  chars of text, whitespace-collapsed. `escapeCss` with a fallback.
+- **Data model:** `position` → `element { selector, tagName, textPreview }` plus
+  required `screenLabel` (first visible h1/h2/h3, else `document.title`, else
+  url). Old stored flags (position / no screenLabel) still load and export.
+- **Named export:** inline **Filename** field (not `prompt()`) pre-filled with
+  the timestamped name; export uses the field's current value; untouched
+  exports refresh the field so repeats never overwrite; `filename` mount option
+  pre-fills it as a fixed override.
+- **Markdown:** `- Screen:` and `- Element: \`sel\` — "preview"` lines;
+  `- Position:` still rendered for legacy flags.
+- Bundle ~14.5KB minified (~5KB gzipped); size gate revised to 15KB. Tests:
+  89 total (was 59), including a new `selector.test.js`.
+
 **Decisions:**
 - No spatial/pixel pins in v0 — plain per-page note list only; add pin
   coordinates later only if usage shows they're missing.

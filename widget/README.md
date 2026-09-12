@@ -53,23 +53,34 @@ Load the plain-script build and mount manually:
 
 A floating "Squawk" button (paper-airplane icon) appears bottom-right. Click it
 to open the note form. Save a note and the count increments. The panel shows
-everything you've flagged this session, plus **Pin location**, **Export .md**
+everything you've flagged this session, plus **Pick element**, **Export .md**
 and **Clear** (empties `localStorage` after a confirmation).
 
-### Precise pinning
+### Precise element picking
 
-To flag an exact spot on the page:
+To flag an exact element on the page (DevTools-style, no code shown):
 
-1. Click **Pin location** in the panel — a transparent crosshair overlay covers
-   the page, so your next click is intercepted and never reaches the app.
-2. Click the exact spot. A numbered pin appears there and the note form opens
-   anchored next to it.
-3. Save the note. The flag records the click position relative to the full
-   document; the pin stays visible for this page session.
-4. Press **Esc** or click **Cancel pin** to back out.
+1. Click **Pick element** in the panel — a blue highlight box tracks the DOM
+   element under your cursor as you move the mouse over the real UI.
+2. Click the element to select it. Squawk intercepts the click via a
+   capture-phase listener, so the app's own handler never fires and you can't
+   accidentally submit a form or navigate. The note form opens anchored next to
+   the selected element.
+3. Save the note. The flag records the element's generated CSS selector, tag,
+   and a short text preview.
+4. Press **Esc** or click **Cancel pick** to back out.
 
-Pins are live-only: they show at the moment of flagging and are not re-drawn
-when the page is later reloaded.
+Selector generation is a simplified "Copy selector": the element's `#id`, else a
+short tag + class path with `:nth-child()` only when siblings would be
+ambiguous, rooted at the nearest ancestor with an id. Good enough for a human
+or an agent to locate the element in the source.
+
+### Named export
+
+Before exporting, the panel shows a **Filename** field pre-filled with a
+timestamped name (`bugs-20260912-140740-123.md`). Edit it to choose any name;
+Export uses whatever is in the field at that moment. If you leave it untouched,
+the field refreshes after each export so repeat exports never overwrite.
 
 ## API
 
@@ -80,21 +91,21 @@ again returns the same instance. Options:
 | ----------- | ------------------- | --------------------------------------------- |
 | `storage`   | `localStorage`      | Custom Storage-like object (testing, sandbox) |
 | `storageKey`| `"squawk:flags"`    | localStorage key                              |
-| `filename`  | generated           | Export filename override (default is a timestamped `bugs-*.md`) |
+| `filename`  | generated           | Fixed export filename override (pre-fills the field) |
 
 Handle methods:
 
 - `getFlags()` — the current flags
-- `add(note, position?)` — programmatically flag a bug; `position` (optional)
-  pins it to a spot. Returns the created flag
-- `arm()` / `disarm()` — turn precise-pin mode on/off
+- `add(note, element?)` — programmatically flag a bug; `element` (optional) is a
+  `{ selector, tagName, textPreview }` target. Returns the created flag
+- `arm()` / `disarm()` — turn element-picker mode on/off
 - `open()` / `close()` / `toggle()` — panel visibility
-- `exportMarkdown()` — trigger the timestamped `bugs-*.md` download
+- `exportMarkdown()` — trigger the download using the current filename field
 - `clear()` — clear all flags after a confirmation
 - `unmount()` — remove the widget from the DOM
 
 Also exported: `createStore`, `toMarkdown`, `noteTitle`, `exportFilename`,
-`STORAGE_KEY`.
+`describeElement`, `buildSelector`, `STORAGE_KEY`.
 
 ## Data model
 
@@ -105,20 +116,21 @@ interface Flag {
   id: string;        // e.g. "F001"
   note: string;
   url: string;        // page path (+ query/hash) where it was flagged
+  screenLabel: string; // first visible heading, else document.title, else url
   timestamp: string;  // ISO 8601
-  position?: {
-    xPercent: number;   // 0–1 relative to full page width
-    yPercent: number;   // 0–1 relative to full document height
-    viewportWidth: number;
-    viewportHeight: number;
+  element?: {
+    selector: string;    // generated CSS selector
+    tagName: string;
+    textPreview: string; // first ~50 chars of the element's text, trimmed
   };
 }
 ```
 
-`position` is optional — plain page-level notes keep working without it. If
-`localStorage` is unavailable (private mode, sandboxed iframe), the widget
-falls back to an in-memory store so it still works, but flags won't survive a
-reload.
+`element` is optional — plain page-level notes keep working without it. Flags
+stored by earlier versions (with a `position` field, or without `screenLabel`)
+remain loadable and export fine. If `localStorage` is unavailable (private
+mode, sandboxed iframe), the widget falls back to an in-memory store so it
+still works, but flags won't survive a reload.
 
 ## Export format
 
@@ -126,22 +138,24 @@ reload.
 # Squawk Bug Report
 Exported: <ISO timestamp>
 
-## F001 — save button unresponsive
+## F002 — wrong default selected
+- Screen: Reports
+- Element: `button.btn.text-green` — "Menos de 6 meses"
 - Page: /dashboard
 - Time: 2026-09-12T21:03:00Z
-- Position: 42% from left, 18% from top (viewport 1440x900)
 
 <full note text>
 ```
 
 Headings use the first ~8 words of the note. The full note text is preserved
-verbatim. The `Position` line is included only for pinned flags.
+verbatim. `Element:` is included only for picked flags; `Position:` appears only
+for flags stored by older widget versions.
 
 Exports download as `bugs-YYYYMMDD-HHmmss-<ms>.md` (filesystem-safe, no colons
-or slashes). The filename and the `Exported:` line come from the same instant,
-and the milliseconds component means repeat exports never overwrite each other.
-Use the `filename` option to force a fixed name. Export is a browser download
-via Blob + `<a download>` — no server round-trip.
+or slashes) unless the filename field is edited. The filename and the
+`Exported:` line come from the same instant, and untouched repeat exports never
+overwrite each other. Export is a browser download via Blob + `<a download>` —
+no server round-trip.
 
 ## Development
 
@@ -149,7 +163,7 @@ via Blob + `<a download>` — no server round-trip.
 npm install
 npm run build   # ESM + CJS + plain-script (IIFE) bundles into dist/
 npm test        # vitest + jsdom (no browser needed)
-npm run check   # build + test + bundle-size gate (<13KB minified)
+npm run check   # build + test + bundle-size gate (<15KB minified)
 ```
 
 Try it against the demo page:

@@ -64,31 +64,6 @@ function stubAnchorDownload() {
   return anchor;
 }
 
-function stubViewport({ innerWidth, innerHeight, scrollX, scrollY, scrollWidth, scrollHeight }) {
-  const orig = {
-    innerWidth: window.innerWidth,
-    innerHeight: window.innerHeight,
-    scrollX: window.scrollX,
-    scrollY: window.scrollY,
-    scrollWidth: document.documentElement.scrollWidth,
-    scrollHeight: document.documentElement.scrollHeight,
-  };
-  Object.defineProperty(window, "innerWidth", { value: innerWidth, configurable: true });
-  Object.defineProperty(window, "innerHeight", { value: innerHeight, configurable: true });
-  Object.defineProperty(window, "scrollX", { value: scrollX, configurable: true });
-  Object.defineProperty(window, "scrollY", { value: scrollY, configurable: true });
-  Object.defineProperty(document.documentElement, "scrollWidth", { value: scrollWidth, configurable: true });
-  Object.defineProperty(document.documentElement, "scrollHeight", { value: scrollHeight, configurable: true });
-  return () => {
-    Object.defineProperty(window, "innerWidth", { value: orig.innerWidth, configurable: true });
-    Object.defineProperty(window, "innerHeight", { value: orig.innerHeight, configurable: true });
-    Object.defineProperty(window, "scrollX", { value: orig.scrollX, configurable: true });
-    Object.defineProperty(window, "scrollY", { value: orig.scrollY, configurable: true });
-    Object.defineProperty(document.documentElement, "scrollWidth", { value: orig.scrollWidth, configurable: true });
-    Object.defineProperty(document.documentElement, "scrollHeight", { value: orig.scrollHeight, configurable: true });
-  };
-}
-
 describe("mountSquawk", () => {
   it("renders a floating button with an icon and a zero badge", () => {
     const widget = mount({ storage: mockStorage() });
@@ -135,7 +110,7 @@ describe("mountSquawk", () => {
 });
 
 describe("flagging", () => {
-  it("add() writes a flag with id, note, url, and ISO timestamp", () => {
+  it("add() writes a flag with id, note, url, screenLabel, and ISO timestamp", () => {
     const storage = mockStorage();
     const widget = mount({ storage });
     const flag = widget.add("save button unresponsive");
@@ -143,6 +118,7 @@ describe("flagging", () => {
     expect(flag.id).toBe("F001");
     expect(flag.note).toBe("save button unresponsive");
     expect(flag.url).toBe("/");
+    expect(flag.screenLabel).toBe("/");
     expect(new Date(flag.timestamp).toISOString()).toBe(flag.timestamp);
     expect(JSON.parse(storage.getItem("squawk:flags"))).toEqual([flag]);
   });
@@ -273,30 +249,13 @@ describe("clear", () => {
   });
 });
 
-describe("pin to locate", () => {
-  let restore;
-
-  beforeEach(() => {
-    restore = stubViewport({
-      innerWidth: 800,
-      innerHeight: 600,
-      scrollX: 50,
-      scrollY: 200,
-      scrollWidth: 2000,
-      scrollHeight: 1000,
-    });
-  });
-
-  afterEach(() => {
-    restore();
-  });
-
-  function clickOverlay(clientX, clientY) {
-    const overlay = document.querySelector("[data-squawk-overlay]");
-    expect(overlay).toBeTruthy();
-    overlay.dispatchEvent(
-      new MouseEvent("click", { bubbles: true, cancelable: true, clientX, clientY })
-    );
+describe("element picker", () => {
+  function appButton(label = "Click me") {
+    const btn = document.createElement("button");
+    btn.className = "btn text-green";
+    btn.textContent = label;
+    document.body.appendChild(btn);
+    return btn;
   }
 
   function saveNote(note) {
@@ -309,113 +268,192 @@ describe("pin to locate", () => {
     return textarea;
   }
 
-  it("add() persists a position passed in", () => {
-    const storage = mockStorage();
-    const widget = mount({ storage });
-    const position = { xPercent: 0.25, yPercent: 0.5, viewportWidth: 800, viewportHeight: 600 };
-    const flag = widget.add("broken chart", position);
-    expect(flag.position).toEqual(position);
-    expect(JSON.parse(storage.getItem("squawk:flags"))[0].position).toEqual(position);
-  });
+  function forceTargetEvent(type, target, props = {}) {
+    const ev = new MouseEvent(type, { bubbles: true, cancelable: true, ...props });
+    Object.defineProperty(ev, "target", { value: target, configurable: true });
+    document.dispatchEvent(ev);
+    return ev;
+  }
 
-  it("add() without a position keeps flags position-free", () => {
-    const storage = mockStorage();
-    const widget = mount({ storage });
-    const flag = widget.add("plain note");
-    expect("position" in flag).toBe(false);
-    expect(JSON.parse(storage.getItem("squawk:flags"))[0]).not.toHaveProperty("position");
-  });
-
-  it("arming shows a full-page overlay and Escape disarms it", () => {
-    const widget = mount({ storage: mockStorage() });
-    widget.arm();
-    expect(document.querySelector("[data-squawk-overlay]")).toBeTruthy();
-
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-    expect(document.querySelector("[data-squawk-overlay]")).toBeNull();
-    expect(widget.getFlags()).toEqual([]);
-  });
-
-  it("clicking the overlay places a pin, anchors the panel, and the click does not reach the page", () => {
-    const pageClicks = vi.fn();
-    document.addEventListener("click", pageClicks);
-    try {
-      const storage = mockStorage();
-      const w = mount({ storage });
-      w.arm();
-
-      clickOverlay(400, 100);
-
-      expect(document.querySelector("[data-squawk-overlay]")).toBeNull();
-      expect(document.querySelectorAll("[data-squawk-pin]")).toHaveLength(1);
-
-      const panel = findPanel(findWidget());
-      expect(panel.classList.contains("anchored")).toBe(true);
-      expect(panel.style.left).toBe("416px");
-      expect(panel.style.top).toBe("116px");
-
-      expect(pageClicks).not.toHaveBeenCalled();
-    } finally {
-      document.removeEventListener("click", pageClicks);
-    }
-  });
-
-  it("saving a pinned flag records the click position with document-relative percentages", () => {
-    const storage = mockStorage();
-    const w = mount({ storage });
-    w.arm();
-
-    clickOverlay(400, 100);
-    saveNote("save button unresponsive");
-
-    const stored = JSON.parse(storage.getItem("squawk:flags"))[0];
-    expect(stored.id).toBe("F001");
-    expect(stored.position).toEqual({
-      xPercent: 0.225,
-      yPercent: 0.3,
-      viewportWidth: 800,
-      viewportHeight: 600,
-    });
-    expect(stored.position.xPercent).toBeCloseTo((400 + 50) / 2000, 5);
-    expect(stored.position.yPercent).toBeCloseTo((100 + 200) / 1000, 5);
-  });
-
-  it("keeps the pin visible after save and cancels an unsaved pin when the panel closes", () => {
-    const storage = mockStorage();
-    const w = mount({ storage });
-    w.arm();
-    clickOverlay(400, 100);
-    saveNote("kept");
-    expect(document.querySelectorAll("[data-squawk-pin]")).toHaveLength(1);
-
-    w.arm();
-    clickOverlay(500, 200);
-    expect(document.querySelectorAll("[data-squawk-pin]")).toHaveLength(2);
-    findPanel(findWidget()).querySelector(".close").click();
-    expect(document.querySelectorAll("[data-squawk-pin]")).toHaveLength(1);
-  });
-
-  it("clear removes live pins and the overlay", () => {
-    const storage = mockStorage();
-    const w = mount({ storage });
-    w.add("one");
-    w.arm();
-    clickOverlay(400, 100);
-    saveNote("pinned");
-    confirmMock.mockReturnValue(true);
-    findPanel(findWidget()).querySelector(".danger").click();
-
-    expect(document.querySelectorAll("[data-squawk-pin]")).toHaveLength(0);
-    expect(document.querySelector("[data-squawk-overlay]")).toBeNull();
-  });
-
-  it("unmount removes pins and overlay", () => {
+  it("arming attaches picker listeners without any overlay div", () => {
     const w = mount({ storage: mockStorage() });
     w.arm();
-    clickOverlay(400, 100);
-    w.unmount();
+    const panel = findPanel(findWidget());
+    expect(panel.querySelector(".pick").textContent).toBe("Cancel pick");
+    expect(panel.querySelector(".pick").classList.contains("active")).toBe(true);
     expect(document.querySelector("[data-squawk-overlay]")).toBeNull();
-    expect(document.querySelector("[data-squawk-pins]")).toBeNull();
+    w.disarm();
+    expect(panel.querySelector(".pick").textContent).toBe("Pick element");
+  });
+
+  it("highlights the hovered element with a positioned box", () => {
+    const btn = appButton();
+    vi.spyOn(btn, "getBoundingClientRect").mockReturnValue({
+      left: 10,
+      top: 20,
+      width: 100,
+      height: 40,
+      right: 110,
+      bottom: 60,
+      x: 10,
+      y: 20,
+      toJSON() {},
+    });
+    const w = mount({ storage: mockStorage() });
+    w.arm();
+    btn.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+
+    const box = document.querySelector("[data-squawk-highlight]");
+    expect(box).toBeTruthy();
+    expect(box.style.display).toBe("block");
+    expect(box.style.left).toBe("10px");
+    expect(box.style.top).toBe("20px");
+    expect(box.style.width).toBe("100px");
+    expect(box.style.height).toBe("40px");
+  });
+
+  it("ignores events targeting the widget itself", () => {
+    const w = mount({ storage: mockStorage() });
+    w.arm();
+    const fab = findWidget().querySelector(".fab");
+    forceTargetEvent("mousemove", fab);
+    expect(document.querySelector("[data-squawk-highlight]").style.display).toBe("none");
+  });
+
+  it("capture-phase click selects the element and suppresses the app handler", () => {
+    const btn = appButton();
+    const appHandler = vi.fn();
+    btn.addEventListener("click", appHandler);
+    const w = mount({ storage: mockStorage() });
+    w.arm();
+
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    expect(appHandler).not.toHaveBeenCalled();
+    const panel = findPanel(findWidget());
+    expect(panel.classList.contains("anchored")).toBe(true);
+    expect(document.querySelector("[data-squawk-highlight]").style.display).toBe("block");
+  });
+
+  it("removes capture listeners after a selection", () => {
+    const btn = appButton();
+    const appHandler = vi.fn();
+    btn.addEventListener("click", appHandler);
+    const w = mount({ storage: mockStorage() });
+    w.arm();
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(appHandler).not.toHaveBeenCalled();
+
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(appHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("saving a picked flag records selector, tagName, textPreview, and screenLabel", () => {
+    document.body.innerHTML = "<h1>Reports</h1>";
+    const storage = mockStorage();
+    const w = mount({ storage });
+    const btn = appButton("Menos de 6 meses");
+    w.arm();
+
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    saveNote("wrong default selected");
+
+    const stored = JSON.parse(storage.getItem("squawk:flags"))[0];
+    expect(stored.screenLabel).toBe("Reports");
+    expect(stored.element).toEqual({
+      selector: "button.btn.text-green",
+      tagName: "button",
+      textPreview: "Menos de 6 meses",
+    });
+    expect(stored).not.toHaveProperty("position");
+  });
+
+  it("add() without an element keeps flags element-free", () => {
+    const storage = mockStorage();
+    const w = mount({ storage });
+    const flag = w.add("plain note");
+    expect(flag).not.toHaveProperty("element");
+    expect(JSON.parse(storage.getItem("squawk:flags"))[0]).not.toHaveProperty("element");
+  });
+
+  it("Escape cancels a pending selection", () => {
+    const btn = appButton();
+    const storage = mockStorage();
+    const w = mount({ storage });
+    w.arm();
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+    expect(document.querySelector("[data-squawk-highlight]").style.display).toBe("none");
+    saveNote("no element note");
+    const stored = JSON.parse(storage.getItem("squawk:flags"))[0];
+    expect(stored).not.toHaveProperty("element");
+  });
+
+  it("unmount removes the highlight box", () => {
+    const btn = appButton();
+    const w = mount({ storage: mockStorage() });
+    w.arm();
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    w.unmount();
+    expect(document.querySelector("[data-squawk-highlight]")).toBeNull();
+  });
+});
+
+describe("filename field", () => {
+  function filenameInput() {
+    return findPanel(findWidget()).querySelector(".file input");
+  }
+
+  it("pre-fills the field with a timestamped name", () => {
+    mount({ storage: mockStorage() });
+    expect(filenameInput().value).toMatch(/^bugs-\d{8}-\d{6}-\d{3}\.md$/);
+  });
+
+  it("export uses the current field value", () => {
+    const w = mount({ storage: mockStorage() });
+    w.add("a bug");
+    const input = filenameInput();
+    input.value = "qa-notes.md";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const anchor = stubAnchorDownload();
+    w.exportMarkdown();
+    expect(anchor.download).toBe("qa-notes.md");
+  });
+
+  it("mount filename option pre-fills and is used", () => {
+    const w = mount({ storage: mockStorage(), filename: "fixed.md" });
+    w.add("a bug");
+    expect(filenameInput().value).toBe("fixed.md");
+    const anchor = stubAnchorDownload();
+    w.exportMarkdown();
+    expect(anchor.download).toBe("fixed.md");
+  });
+
+  it("falls back to a timestamped name when the field is empty", () => {
+    const w = mount({ storage: mockStorage() });
+    w.add("a bug");
+    const input = filenameInput();
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const anchor = stubAnchorDownload();
+    w.exportMarkdown();
+    expect(anchor.download).toMatch(/^bugs-\d{8}-\d{6}-\d{3}\.md$/);
+  });
+
+  it("untouched repeated exports never reuse the same name", () => {
+    let t = 1700000000000;
+    vi.spyOn(Date, "now").mockImplementation(() => (t += 1000));
+    const w = mount({ storage: mockStorage() });
+    w.add("a bug");
+    const anchor = stubAnchorDownload();
+    w.exportMarkdown();
+    const first = anchor.download;
+    w.exportMarkdown();
+    const second = anchor.download;
+    expect(first).toMatch(/^bugs-\d{8}-\d{6}-\d{3}\.md$/);
+    expect(second).toMatch(/^bugs-\d{8}-\d{6}-\d{3}\.md$/);
+    expect(first).not.toBe(second);
   });
 });
 

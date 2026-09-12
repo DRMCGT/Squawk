@@ -93,6 +93,45 @@ describe("createStore", () => {
     expect(store.load()).toEqual([validFlag()]);
   });
 
+  it("round-trips flags with an element", () => {
+    const storage = mockStorage();
+    const store = createStore({ storage });
+    const withElement = {
+      ...validFlag(),
+      screenLabel: "Reports",
+      element: {
+        selector: "button.btn-primary",
+        tagName: "button",
+        textPreview: "Save changes",
+      },
+    };
+    store.save([withElement]);
+    expect(store.load()).toEqual([withElement]);
+  });
+
+  it("keeps legacy position flags loadable", () => {
+    const legacy = {
+      ...validFlag(),
+      position: { xPercent: 0.5, yPercent: 0.5, viewportWidth: 800, viewportHeight: 600 },
+    };
+    const store = createStore({
+      storage: mockStorage({ [STORAGE_KEY]: JSON.stringify([legacy]) }),
+    });
+    expect(store.load()).toEqual([legacy]);
+  });
+
+  it("drops flags with a malformed element", () => {
+    const stored = [
+      validFlag(),
+      { ...validFlag({ id: "F002" }), element: { selector: 5 } },
+      { ...validFlag({ id: "F003" }), element: { tagName: "button" } },
+    ];
+    const store = createStore({
+      storage: mockStorage({ [STORAGE_KEY]: JSON.stringify(stored) }),
+    });
+    expect(store.load()).toEqual([validFlag()]);
+  });
+
   it("clear removes the key", () => {
     const storage = mockStorage({ [STORAGE_KEY]: "[]" });
     const store = createStore({ storage });

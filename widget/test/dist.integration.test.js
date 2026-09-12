@@ -18,11 +18,14 @@ function readBlob(win, blob) {
 }
 
 describe.skipIf(!hasBundle)("built plain-script bundle", () => {
-  it("drives the full flag -> localStorage -> export loop via the Squawk global", async () => {
-    const dom = new JSDOM("<!doctype html><html><body><p>app</p></body></html>", {
-      runScripts: "outside-only",
-      url: "http://localhost:3000/dashboard?tab=reports",
-    });
+  it("drives the full element-picker flag -> localStorage -> export loop via the Squawk global", async () => {
+    const dom = new JSDOM(
+      '<!doctype html><html><head><title>Cillus</title></head><body><h1>Reports</h1><button class="btn text-green">Menos de 6 meses</button></body></html>',
+      {
+        runScripts: "outside-only",
+        url: "http://localhost:3000/dashboard?tab=reports",
+      }
+    );
     const win = dom.window;
 
     const created = [];
@@ -32,7 +35,9 @@ describe.skipIf(!hasBundle)("built plain-script bundle", () => {
     };
     win.URL.revokeObjectURL = () => {};
     win.confirm = () => true;
-    win.HTMLAnchorElement.prototype.click = () => {};
+    win.HTMLAnchorElement.prototype.click = function () {
+      // record the download name instead of navigating
+    };
 
     win.eval(readFileSync(bundle, "utf8"));
 
@@ -42,16 +47,34 @@ describe.skipIf(!hasBundle)("built plain-script bundle", () => {
 
     const widget = win.Squawk.mount();
 
+    // plain note
     const f1 = widget.add("save button unresponsive");
-    const f2 = widget.add("dashboard chart empty after refresh");
-
     expect(f1.id).toBe("F001");
-    expect(f2.id).toBe("F002");
     expect(f1.url).toBe("/dashboard?tab=reports");
+    expect(f1.screenLabel).toBe("Reports");
+
+    // element picker flow
+    const btn = win.document.querySelector("button");
+    widget.arm();
+    btn.dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+    const shadow = win.document.querySelector("[data-squawk-widget]").shadowRoot;
+    const textarea = shadow.querySelector("textarea");
+    textarea.value = "wrong default selected";
+    textarea.dispatchEvent(new win.Event("input", { bubbles: true }));
+    shadow.querySelector(".save").click();
 
     const stored = JSON.parse(win.localStorage.getItem("squawk:flags"));
     expect(stored).toHaveLength(2);
-    expect(stored[1].note).toBe("dashboard chart empty after refresh");
+    expect(stored[1].element).toEqual({
+      selector: "button.btn.text-green",
+      tagName: "button",
+      textPreview: "Menos de 6 meses",
+    });
+
+    // custom export filename
+    const fileInput = shadow.querySelector(".file input");
+    fileInput.value = "qa-cillus.md";
+    fileInput.dispatchEvent(new win.Event("input", { bubbles: true }));
 
     widget.exportMarkdown();
     expect(created).toHaveLength(1);
@@ -59,8 +82,10 @@ describe.skipIf(!hasBundle)("built plain-script bundle", () => {
 
     expect(md).toContain("# Squawk Bug Report");
     expect(md).toContain("## F001 — save button unresponsive");
+    expect(md).toContain("- Screen: Reports");
     expect(md).toContain("- Page: /dashboard?tab=reports");
-    expect(md).toContain("## F002 — dashboard chart empty after refresh");
+    expect(md).toContain("## F002 — wrong default selected");
+    expect(md).toContain('- Element: `button.btn.text-green` — "Menos de 6 meses"');
     expect(md).toContain("- Time: ");
     expect(md).toContain("save button unresponsive");
 

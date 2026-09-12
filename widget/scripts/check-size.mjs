@@ -6,7 +6,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const file = join(here, "..", "dist", "squawk.min.js");
 
 const bytes = statSync(file).size;
-const limit = 13 * 1024;
+const limit = 15 * 1024;
 
 console.log(`squawk.min.js: ${bytes} bytes (limit ${limit})`);
 if (bytes > limit) {
