@@ -21,5 +21,5 @@ const banner = `             __
 // printBanner writes the airplane artwork, product name, and version.
 func printBanner() {
 	fmt.Print(banner)
-	fmt.Printf("Squawk v%s\n", version.Version)
+	fmt.Printf("Squawk %s\n", version.Version)
 }

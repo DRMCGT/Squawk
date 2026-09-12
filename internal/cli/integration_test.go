@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/DRMCGT/Squawk/internal/version"
 )
 
 var (
@@ -159,7 +161,7 @@ func TestNoArgsShowsBannerAndHelp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("squawk (no args): %v", err)
 	}
-	for _, want := range []string{"Squawk v", "Usage:", "Available Commands:"} {
+	for _, want := range []string{"Squawk " + version.Version, "Usage:", "Available Commands:"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("no-args output missing %q:\n%s", want, out)
 		}
@@ -172,7 +174,7 @@ func TestInitShowsBanner(t *testing.T) {
 	if err != nil {
 		t.Fatalf("init: %v", err)
 	}
-	if !strings.Contains(out, "Squawk v") {
+	if !strings.Contains(out, "Squawk "+version.Version) {
 		t.Fatalf("init output missing banner:\n%s", out)
 	}
 }
