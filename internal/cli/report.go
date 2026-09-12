@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,50 +22,7 @@ func newReportCmd() *cobra.Command {
 		Long: "Generate a report for the active session (or a specific one with --session).\n" +
 			"The report embeds screenshots by relative path and includes the recent logcat excerpts and tester notes.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			store, err := session.NewStore(sessionDir)
-			if err != nil {
-				return err
-			}
-
-			var sess *model.Session
-			if sessionID != "" {
-				sess, err = store.LoadSession(sessionID)
-			} else {
-				sess, err = store.CurrentSession()
-			}
-			if err != nil {
-				return err
-			}
-
-			format = strings.ToLower(strings.TrimSpace(format))
-			if format == "" {
-				format = "markdown"
-			}
-			var data []byte
-			switch format {
-			case "markdown":
-				data, err = report.Markdown(store.SessionDir(sess.ID), sess)
-			case "json":
-				data, err = report.JSON(sess)
-			default:
-				return fmt.Errorf("unsupported format %q; use markdown or json", format)
-			}
-			if err != nil {
-				return err
-			}
-
-			if output == "" {
-				ext := ".md"
-				if format == "json" {
-					ext = ".json"
-				}
-				output = filepath.Join(store.SessionDir(sess.ID), "report"+ext)
-			}
-			if err := os.WriteFile(output, data, 0o644); err != nil {
-				return fmt.Errorf("cannot write report: %w", err)
-			}
-			fmt.Printf("squawk: report written to %s\n", output)
-			return nil
+			return runReport(cmd.Context(), sessionDir, sessionID, format, output)
 		},
 	}
 	cmd.Flags().StringVar(&sessionDir, "session-dir", "", "root directory for Squawk data (default ./.squawk)")
@@ -72,4 +30,54 @@ func newReportCmd() *cobra.Command {
 	cmd.Flags().StringVar(&format, "format", "markdown", "report format: markdown or json")
 	cmd.Flags().StringVar(&output, "output", "", "output path (default: <session dir>/report.md or report.json)")
 	return cmd
+}
+
+// runReport generates a report for the active session (or --session) and
+// writes it to the session directory (or --output). It is shared by the
+// `squawk report` command and the `/report` slash command inside `watch`.
+func runReport(_ context.Context, sessionDir, sessionID, format, output string) error {
+	store, err := session.NewStore(sessionDir)
+	if err != nil {
+		return err
+	}
+
+	var sess *model.Session
+	if sessionID != "" {
+		sess, err = store.LoadSession(sessionID)
+	} else {
+		sess, err = store.CurrentSession()
+	}
+	if err != nil {
+		return err
+	}
+
+	format = strings.ToLower(strings.TrimSpace(format))
+	if format == "" {
+		format = "markdown"
+	}
+	var data []byte
+	switch format {
+	case "markdown":
+		data, err = report.Markdown(store.SessionDir(sess.ID), sess)
+	case "json":
+		data, err = report.JSON(sess)
+	default:
+		return fmt.Errorf("unsupported format %q; use markdown or json", format)
+	}
+	if err != nil {
+		return err
+	}
+
+	if output == "" {
+		ext := ".md"
+		if format == "json" {
+			ext = ".json"
+		}
+		output = filepath.Join(store.SessionDir(sess.ID), "report"+ext)
+	}
+	if err := os.WriteFile(output, data, 0o644); err != nil {
+		return fmt.Errorf("cannot write report: %w", err)
+	}
+	fmt.Printf("squawk: report written to %s\n", output)
+	return nil
 }

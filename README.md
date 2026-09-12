@@ -52,7 +52,8 @@ With your emulator running:
 squawk init
 
 # 2. Capture bugs interactively — press Enter to capture, type a note then
-#    Enter to capture with it, type q to quit
+#    Enter to capture with it, or use slash commands: /capture, /note <text>,
+#    /report (refresh the report), /help, /quit
 squawk watch
 
 #    Or capture from anywhere (a second terminal works too):
@@ -89,7 +90,7 @@ format as Android.
 | --- | --- |
 | `squawk init` | Start a new session (Android or browser) and make it active |
 | `squawk capture` | Capture a squawk: screenshot + recent logs + note |
-| `squawk watch` | Interactive capture loop |
+| `squawk watch` | Interactive capture loop with slash commands (`/capture`, `/note <text>`, `/report`, `/help`, `/quit`) |
 | `squawk report` | Generate a Markdown or JSON report |
 | `squawk devices` | List connected Android devices or browser tabs |
 | `squawk version` | Print version and build metadata |

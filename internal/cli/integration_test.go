@@ -153,3 +153,77 @@ func TestCaptureStdinNote(t *testing.T) {
 		t.Fatalf("capture output unexpected:\n%s", out)
 	}
 }
+
+func TestNoArgsShowsBannerAndHelp(t *testing.T) {
+	out, _, err := runSquawk(t, t.TempDir(), "", "")
+	if err != nil {
+		t.Fatalf("squawk (no args): %v", err)
+	}
+	for _, want := range []string{"Squawk v", "Usage:", "Available Commands:"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("no-args output missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestInitShowsBanner(t *testing.T) {
+	sessionDir := t.TempDir()
+	out, _, err := runSquawk(t, sessionDir, "", "init", "--session-dir", sessionDir)
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	if !strings.Contains(out, "Squawk v") {
+		t.Fatalf("init output missing banner:\n%s", out)
+	}
+}
+
+func TestWatchSlashCommands(t *testing.T) {
+	sessionDir := t.TempDir()
+	if _, _, err := runSquawk(t, sessionDir, "", "init", "--session-dir", sessionDir); err != nil {
+		t.Fatalf("init: %v", err)
+	}
+
+	stdin := strings.Join([]string{
+		"/help",
+		"",           // bare Enter -> capture, then prompt for note
+		"first note", // answer to the note prompt
+		"/note 2nd",  // one-line note capture
+		"/report",    // refresh report without leaving watch
+		"/q",         // quit
+	}, "\n") + "\n"
+
+	out, errOut, err := runSquawk(t, sessionDir, stdin, "watch", "--session-dir", sessionDir)
+	if err != nil {
+		t.Fatalf("watch: %v (stderr: %s)", err, errOut)
+	}
+
+	for _, want := range []string{
+		"commands:",
+		"/note <text>",
+		"note (optional):",
+		"squawk 001 captured",
+		"squawk 002 captured",
+		"report written to",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("watch output missing %q:\n%s", want, out)
+		}
+	}
+
+	reportPath := filepath.Join(sessionDir, "sessions")
+	entries, err := os.ReadDir(reportPath)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("expected one session dir, got %v (err %v)", entries, err)
+	}
+	sessDir := filepath.Join(reportPath, entries[0].Name())
+	md, err := os.ReadFile(filepath.Join(sessDir, "report.md"))
+	if err != nil {
+		t.Fatalf("read report.md: %v", err)
+	}
+	body := string(md)
+	for _, want := range []string{"first note", "2nd"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("report.md missing %q:\n%s", want, body)
+		}
+	}
+}

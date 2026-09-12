@@ -19,6 +19,7 @@ func newInitCmd() *cobra.Command {
 			"Verifies the backend (adb by default, or Chrome DevTools with --backend browser)\n" +
 			"and picks a target device or tab before creating the session.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			printBanner()
 			return runInit(cmd.Context(), sessionDir, backend, device, tab, cdp, logLines)
 		},
 	}

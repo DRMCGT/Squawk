@@ -22,9 +22,13 @@ func Execute() {
 func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "squawk",
-		Short:         "Capture bug context (screenshot, logs, notes) during manual Android QA",
+		Short:         "Capture bug context (screenshot, logs, notes) during manual QA",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			printBanner()
+			return cmd.Help()
+		},
 	}
 	root.AddCommand(
 		newInitCmd(),
