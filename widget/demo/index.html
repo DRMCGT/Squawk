@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Squawk Widget Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 40px auto;
+        padding: 0 16px;
+        color: #1a1a1a;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      p {
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Demo app</h1>
+    <p>Open the Squawk widget (bottom-right), type a note, and save it. Or click <b>Pin location</b>, then click anywhere on this page, and save a note pinned to that exact spot. Reload the page and the count persists (pins are live-only). Click Export .md to download a timestamped <code>bugs-*.md</code> report.</p>
+
+    <script src="../dist/squawk.js"></script>
+    <script>
+      Squawk.mount();
+    </script>
+  </body>
+</html>

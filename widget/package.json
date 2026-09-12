@@ -1,0 +1,52 @@
+{
+  "name": "squawk-widget",
+  "version": "0.1.0",
+  "description": "Lightweight embeddable bug-flagging widget for local web app testing. Flag issues, store them in localStorage, export a bugs.md report for your coding agent.",
+  "keywords": [
+    "testing",
+    "qa",
+    "bug",
+    "widget",
+    "localstorage",
+    "markdown",
+    "squawk"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/squawk.cjs.js",
+  "module": "dist/squawk.esm.js",
+  "unpkg": "dist/squawk.min.js",
+  "jsdelivr": "dist/squawk.min.js",
+  "exports": {
+    ".": {
+      "import": "./dist/squawk.esm.js",
+      "require": "./dist/squawk.cjs.js",
+      "default": "./dist/squawk.js"
+    },
+    "./squawk.js": "./dist/squawk.js",
+    "./squawk.min.js": "./dist/squawk.min.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:size": "node scripts/check-size.mjs",
+    "check": "npm run build && npm test && npm run check:size",
+    "prepublishOnly": "npm run check"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.0"
+  }
+}
