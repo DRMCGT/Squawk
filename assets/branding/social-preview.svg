@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .bg { fill: url(#cardBg); }
+    .grid-line { stroke: #334155; stroke-width: 1; opacity: 0.15; }
+    .signal { stroke: url(#brandGrad); fill: none; stroke-linecap: round; }
+    .chevron { fill: url(#brandGrad); }
+    .beacon { fill: url(#amberGrad); }
+    .title { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; fill: #f8fafc; font-size: 76px; letter-spacing: -0.03em; }
+    .badge { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; fill: #38bdf8; font-size: 16px; letter-spacing: 0.25em; text-transform: uppercase; }
+    .tagline { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; fill: #e2e8f0; font-size: 32px; letter-spacing: -0.01em; }
+    .desc { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400; fill: #94a3b8; font-size: 22px; line-height: 1.5; }
+    .code-box { fill: #0f172a; stroke: #334155; stroke-width: 1.5; rx: 12; }
+    .code-text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 18px; fill: #38bdf8; }
+    .code-sub { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 18px; fill: #fbbf24; }
+  </style>
+
+  <!-- Background Layer -->
+  <rect width="1280" height="640" class="bg" />
+
+  <!-- Subtle Technical Grid Lines -->
+  <path class="grid-line" d="M 0,160 L 1280,160 M 0,320 L 1280,320 M 0,480 L 1280,480" />
+  <path class="grid-line" d="M 320,0 L 320,640 M 640,0 L 640,640 M 960,0 L 960,640" />
+
+  <!-- Left Column: Big Brand Mark -->
+  <g transform="translate(100, 140)">
+    <!-- Signal Arcs -->
+    <path class="signal" stroke-width="14" d="M 50,70 A 170,170 0 0,1 270,70" opacity="0.4" />
+    <path class="signal" stroke-width="16" d="M 82,110 A 125,125 0 0,1 238,110" opacity="0.75" />
+    <path class="signal" stroke-width="18" d="M 115,150 A 80,80 0 0,1 205,150" opacity="1.0" />
+
+    <!-- Transponder Chevron -->
+    <path class="chevron" d="M 160,135 L 290,285 L 225,285 L 160,210 L 95,285 L 30,285 Z" />
+
+    <!-- Amber Beacon -->
+    <circle class="beacon" cx="160" cy="345" r="24" filter="url(#glow)" />
+    <circle fill="#0b0f19" cx="160" cy="345" r="9" />
+  </g>
+
+  <!-- Right Column: Product Title, Tagline & Workflow -->
+  <g transform="translate(480, 150)">
+    <text x="0" y="30" class="badge">Open Source Developer Tool</text>
+    <text x="0" y="110" class="title">Squawk</text>
+    <text x="0" y="170" class="tagline">Signal the bug. Hand the context to AI.</text>
+
+    <text x="0" y="230" class="desc">Instant context-rich QA bug reporting for developers and test engineers.</text>
+    <text x="0" y="265" class="desc">Captures screenshots, logs, DOM elements &amp; notes for AI coding agents.</text>
+
+    <!-- Visual Workflow Card -->
+    <g transform="translate(0, 310)">
+      <rect width="680" height="90" class="code-box" />
+      <text x="30" y="53" class="code-text">Squawk bug</text>
+      <text x="175" y="53" fill="#64748b" font-family="sans-serif" font-size="20">➔</text>
+      <text x="210" y="53" class="code-text">Export Markdown</text>
+      <text x="405" y="53" fill="#64748b" font-family="sans-serif" font-size="20">➔</text>
+      <text x="440" y="53" class="code-sub">AI Agent Fixes It</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+
+    <!-- Signal Arc Gradient -->
+    <linearGradient id="signalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Chevron Wing Gradient -->
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <!-- Amber Alert/Capture Accent -->
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .bg { fill: url(#bgGrad); }
+    .signal { stroke: url(#signalGrad); fill: none; stroke-linecap: round; }
+    .wing { fill: url(#wingGrad); }
+    .amber { fill: url(#amberGrad); }
+    .text-main { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; fill: #f8fafc; letter-spacing: -0.03em; }
+    .text-sub { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; fill: #94a3b8; letter-spacing: 0.12em; }
+  </style>
+
+  <!-- Dark Card Background with subtle border -->
+  <rect width="512" height="512" rx="32" class="bg" />
+  <rect width="510" height="510" x="1" y="1" rx="31" fill="none" stroke="#1e293b" stroke-width="2" />
+
+  <!-- Transponder Signal Rings (Radar Pulse) -->
+  <path class="signal" stroke-width="12" d="M 170,140 A 130,130 0 0,1 342,140" opacity="0.4" />
+  <path class="signal" stroke-width="14" d="M 195,175 A 95,95 0 0,1 317,175" opacity="0.7" />
+  <path class="signal" stroke-width="16" d="M 220,210 A 60,60 0 0,1 292,210" opacity="1.0" />
+
+  <!-- Vector Wing / Transponder Chevron -->
+  <!-- Fast, sharp vector geometry representing squawk signal transmission -->
+  <path class="wing" d="M 256,190 L 370,315 L 310,315 L 256,255 L 202,315 L 142,315 Z" />
+
+  <!-- Amber Bug Capture Target / Transponder Beacon Dot -->
+  <circle class="amber" cx="256" cy="365" r="22" filter="url(#glow)" />
+  <circle fill="#0b0f19" cx="256" cy="365" r="8" />
+
+  <!-- Signal Pulse Dots -->
+  <circle fill="#38bdf8" cx="130" cy="315" r="6" />
+  <circle fill="#38bdf8" cx="382" cy="315" r="6" />
+</svg>

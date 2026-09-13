@@ -1,21 +1,97 @@
-# Squawk
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/branding/squawk-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/branding/squawk-logo-light.svg">
+    <img alt="Squawk" src="assets/branding/squawk-logo.svg" width="460">
+  </picture>
+</p>
 
-Squawk is a CLI tool for developers doing manual/exploratory QA testing on
-Android apps. The moment you spot a bug, you "squawk" it: Squawk captures a
-screenshot, the recent device logs, and a short note. At the end of the
-session it compiles everything into a single Markdown (or JSON) report that
-can be handed straight to an AI coding agent — no manual reconstruction of
-steps, logs, or screenshots needed.
+<p align="center">
+  <strong>Signal the bug. Export clean context. Hand it straight to your AI coding agent.</strong>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.23%2B-00ADD8.svg" alt="Go 1.23+"></a>
+  <img src="https://img.shields.io/badge/widget-local%20package-lightgrey.svg" alt="Web widget: local package">
+</p>
+
+---
+
+Squawk is an open-source QA tool for developers doing manual or exploratory
+testing. The moment you spot a bug, you "squawk" it: Squawk captures the
+context a coding agent needs to fix it — a screenshot, recent device or
+browser logs, the exact DOM element you clicked, and your note — then compiles
+everything into a single Markdown or JSON report. No manual reconstruction of
+reproduction steps.
 
 > **Squawk** is real aviation terminology: the code an aircraft's transponder
 > broadcasts to air traffic control to signal its status. Same idea here — you
 > squawk the moment you spot a bug, and the tool broadcasts the context for
 > someone (or something) else to act on.
 
+## Why Squawk?
+
+When exploratory testing uncovers a bug, capturing the full context is tedious:
+screenshots, terminal or browser logs, CSS selectors, and a clear bug report
+take minutes per issue. Squawk automates that loop:
+
+- **Instant capture** — record bugs the moment you spot them during testing.
+- **Rich telemetry** — Android screenshots + `logcat`, Chrome tab screenshots +
+  console logs + uncaught exceptions, and exact DOM element selectors from the
+  web widget.
+- **AI-ready exports** — structured Markdown/JSON reports formatted for coding
+  agents such as Claude, Cursor, Aider, or Copilot.
+
+## Workflow
+
+```text
+┌─────────────┐       ┌───────────────┐       ┌─────────────────┐       ┌──────────────────┐
+│  Find Bug   │  ──►  │   Squawk It   │  ──►  │ Export Context  │  ──►  │  AI Coding Agent │
+│ (App/Web)   │       │ (CLI/Widget)  │       │  (Markdown/JSON)│       │    Fixes Code    │
+└─────────────┘       └───────────────┘       └─────────────────┘       └──────────────────┘
+```
+
+## Products
+
+Squawk offers two complementary tools:
+
+### 1. Go CLI — Android and Chrome DevTools Protocol
+
+Ideal for testing native Android apps (emulator or physical device) or local
+browser apps via Chrome DevTools Protocol.
+
+- **Android backend** — connects via `adb` to capture device screenshots and the
+  `logcat` buffer.
+- **Browser backend** — attaches to Chrome launched with
+  `--remote-debugging-port=9222` and captures tab screenshots, console messages,
+  and uncaught exceptions.
+- **Interactive TUI** — `squawk watch`, a full-screen terminal UI for rapid
+  continuous testing.
+
+### 2. Web Widget — dev-only, zero backend
+
+An embeddable, client-side JavaScript widget for testing web apps directly in
+the browser.
+
+- **Zero infrastructure** — no backend, network requests, or account setup;
+  flags are stored in `localStorage`.
+- **DevTools-style element picker** — locks onto an exact DOM element and
+  records its generated CSS selector, tag name, text preview, and screen label.
+- **One-click export** — downloads a named or timestamped
+  `bugs-YYYYMMDD-HHmmss-<ms>.md` report straight to your downloads folder.
+
+> **Note:** screenshots and system logs come from the Go CLI backends. The web
+> widget handles DOM element selection, notes, and Markdown export only.
+
 ## Install
 
-Requires `curl` and `adb` (Android SDK platform-tools) on your `PATH`, plus an
-Android emulator or device with USB debugging enabled.
+### Go CLI
+
+Requires `curl`. Android capture requires `adb` (Android SDK platform-tools) on
+your `PATH` and a device or emulator with USB debugging enabled. Browser
+capture requires a Chrome instance started with remote debugging. You do not
+need both.
 
 **Linux / macOS** (installs to `~/.local/bin`, no sudo):
 
@@ -41,11 +117,53 @@ make build      # -> dist/squawk
 make install    # -> ~/.local/bin/squawk
 ```
 
+### Web Widget
+
+The widget is not published to npm yet; consume it from this repository
+(`widget/`). From your web app:
+
+```bash
+npm install /path/to/Squawk/widget
+```
+
+Import and mount it in development only:
+
+```js
+import { mountSquawk } from "squawk-widget";
+
+if (process.env.NODE_ENV === "development") {
+  mountSquawk();
+}
+```
+
+Vite/other `import.meta.env` setups:
+
+```js
+import { mountSquawk } from "squawk-widget";
+
+if (import.meta.env?.DEV) {
+  mountSquawk();
+}
+```
+
+No-bundler usage: copy `widget/dist/squawk.js` into your project and load it
+with a plain script tag.
+
+```html
+<script src="squawk.js"></script>
+<script>
+  Squawk.mount();
+</script>
+```
+
+See [`widget/README.md`](widget/README.md) for the full widget API and export
+format.
+
 ## Quick start
 
 ### Android (default)
 
-With your emulator running:
+With your emulator or device running:
 
 ```bash
 # 1. Start a session (picks the only connected device, or use --device)
@@ -63,7 +181,7 @@ squawk capture --note "save button unresponsive"
 squawk report
 
 # 4. Point your AI coding agent at it
-cat .squawk/sessions/<SESSION>/report.md | claude -p "..."
+cat .squawk/sessions/<SESSION>/report.md | claude -p "Fix the bugs in this report"
 ```
 
 ### Browser (Chrome on localhost)
@@ -84,35 +202,15 @@ endpoint with `--cdp http://localhost:9222`. Captures include a screenshot of
 the tab plus recent console messages and uncaught exceptions. Same report
 format as Android.
 
-## Web widget (dev-only, separate from the CLI)
-
-There is also an embeddable client-side **Squawk widget** for testing web apps
-directly in the browser: a floating button, a quick note form, optional
-click-to-pin precise location, flags persisted in `localStorage`, and a
-one-click export to a timestamped `bugs.md` file for a coding agent. No
-backend, no network calls, no screenshots.
-
-It ships as a small npm package (`widget/`, ~14.5KB minified, ~5KB gzipped)
-with an ESM build for bundlers and a plain `<script src>` build for no-bundler
-projects. See [`widget/README.md`](widget/README.md) for usage.
-
-```js
-import { mountSquawk } from "squawk-widget";
-
-if (process.env.NODE_ENV === "development") {
-  mountSquawk();
-}
-```
-
 ## Commands
 
 | Command | Description |
 | --- | --- |
 | `squawk init` | Start a new session (Android or browser) and make it active |
 | `squawk capture` | Capture a squawk: screenshot + recent logs + note |
-| `squawk watch` | Full-screen interactive capture loop (falls back to a plain-text loop when piped) with slash commands (`/capture`, `/note <text>`, `/report`, `/help`, `/quit`) |
+| `squawk watch` | Full-screen interactive TUI capture loop (falls back to a plain-text loop when piped) with slash commands (`/capture`, `/note <text>`, `/report`, `/help`, `/quit`) |
 | `squawk report` | Generate a Markdown or JSON report |
-| `squawk devices` | List connected Android devices or browser tabs |
+| `squawk devices` | List connected Android devices or open browser tabs |
 | `squawk version` | Print version and build metadata |
 
 Common flags:
@@ -128,6 +226,13 @@ Common flags:
 
 ```bash
 echo "save button unresponsive" | squawk capture
+```
+
+`report` writes Markdown by default and can emit JSON or a custom path:
+
+```bash
+squawk report --format json
+squawk report --output /tmp/bugs.md
 ```
 
 ## Sessions and reports
@@ -163,6 +268,9 @@ break the report.
   the full-screen `squawk watch` TUI only. The rest of the CLI stays
   dependency-light plain text.
 
+The web widget has no runtime dependencies; it ships as vanilla JS with Shadow
+DOM.
+
 ## Design
 
 - **`internal/adb`** — thin wrapper over the `adb` binary (devices, `screencap
@@ -177,6 +285,8 @@ break the report.
 - **`internal/report`** — renders a session to Markdown/JSON. Never calls a
   backend.
 - **`internal/cli`** — command wiring and user-facing errors.
+- **`widget/`** — standalone, dependency-free web widget package
+  (`squawk-widget`).
 
 The capture logic is decoupled from output formatting so a future hosted layer
 (sync, team accounts, GitHub/MCP integration) can consume the same session
@@ -185,12 +295,17 @@ data.
 ## Testing
 
 ```bash
+# Go CLI
 go test ./...
+
+# Web widget
+cd widget && npm run check
 ```
 
-Tests use an injectable adb runner plus a fake `adb` script in
+CLI tests use an injectable adb runner plus a fake `adb` script in
 `testdata/fake-adb` — no emulator required. Set `SQUAWK_ADB` to point at a
-custom adb if needed.
+custom adb if needed. Widget tests use vitest + jsdom and include a bundle-size
+gate.
 
 ## Release builds
 
@@ -203,3 +318,12 @@ make release        # builds tarballs + SHA256SUMS.txt into dist/
 Version, commit, and build date are injected at compile time via `-ldflags`
 and reported by `squawk version`. Tagging a `v*` version pushes release assets
 (Linux/macOS × amd64/arm64) automatically via GitHub Actions.
+
+## Branding
+
+Logo assets, the color system, and usage guidance live in
+[`assets/branding/BRAND.md`](assets/branding/BRAND.md).
+
+## License
+
+[MIT](LICENSE)

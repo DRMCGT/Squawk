@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="logoGradDarkOnly" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="amberDarkOnly" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <style>
+    .arc { fill: none; stroke: url(#logoGradDarkOnly); stroke-linecap: round; }
+    .chevron { fill: url(#logoGradDarkOnly); }
+    .beacon { fill: url(#amberDarkOnly); }
+    .brand-title { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 800; fill: #f8fafc; font-size: 54px; letter-spacing: -0.03em; }
+    .brand-tag { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; fill: #38bdf8; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; }
+  </style>
+
+  <g transform="translate(10, 0)">
+    <path class="arc" stroke-width="5" d="M 28,26 A 34,34 0 0,1 86,26" opacity="0.5" />
+    <path class="arc" stroke-width="6" d="M 38,38 A 21,21 0 0,1 76,38" opacity="0.9" />
+    <path class="chevron" d="M 57,40 L 86,70 L 72,70 L 57,56 L 42,70 L 28,70 Z" />
+    <circle class="beacon" cx="57" cy="84" r="6" />
+  </g>
+
+  <text x="120" y="68" class="brand-title">Squawk</text>
+  <text x="122" y="92" class="brand-tag">Signal Bug • Hand to AI</text>
+</svg>
