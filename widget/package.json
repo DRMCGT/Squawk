@@ -12,6 +12,15 @@
     "squawk"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DRMCGT/Squawk.git",
+    "directory": "widget"
+  },
+  "homepage": "https://github.com/DRMCGT/Squawk/tree/main/widget",
+  "bugs": {
+    "url": "https://github.com/DRMCGT/Squawk/issues"
+  },
   "type": "module",
   "main": "dist/squawk.cjs.js",
   "module": "dist/squawk.esm.js",
@@ -39,6 +48,7 @@
     "test:watch": "vitest",
     "check:size": "node scripts/check-size.mjs",
     "check": "npm run build && npm test && npm run check:size",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run check"
   },
   "engines": {
@@ -48,5 +58,8 @@
     "esbuild": "^0.25.0",
     "jsdom": "^26.0.0",
     "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
   }
 }
