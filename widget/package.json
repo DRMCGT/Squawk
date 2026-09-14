@@ -22,14 +22,14 @@
     "url": "https://github.com/DRMCGT/Squawk/issues"
   },
   "type": "module",
-  "main": "dist/squawk.cjs.js",
+  "main": "dist/squawk.cjs",
   "module": "dist/squawk.esm.js",
   "unpkg": "dist/squawk.min.js",
   "jsdelivr": "dist/squawk.min.js",
   "exports": {
     ".": {
       "import": "./dist/squawk.esm.js",
-      "require": "./dist/squawk.cjs.js",
+      "require": "./dist/squawk.cjs",
       "default": "./dist/squawk.js"
     },
     "./squawk.js": "./dist/squawk.js",

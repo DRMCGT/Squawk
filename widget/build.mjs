@@ -17,7 +17,7 @@ const targets = [
   { ...common, format: "esm", outfile: "dist/squawk.esm.min.js", minify: true },
   { ...common, format: "iife", globalName: "Squawk", outfile: "dist/squawk.js", footer: iifeFooter },
   { ...common, format: "iife", globalName: "Squawk", outfile: "dist/squawk.min.js", minify: true, footer: iifeFooter },
-  { ...common, format: "cjs", outfile: "dist/squawk.cjs.js" },
+  { ...common, format: "cjs", outfile: "dist/squawk.cjs" },
 ];
 
 for (const target of targets) {
