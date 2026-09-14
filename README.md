@@ -16,6 +16,10 @@
   <img src="https://img.shields.io/badge/widget-local%20package-lightgrey.svg" alt="Web widget: local package">
 </p>
 
+<p align="center">
+  <a href="https://www.producthunt.com/products/squawk-4?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-squawk-4" target="_blank" rel="noopener noreferrer"><img alt="Squawk - CLI tool for developers doing manual/exploratory QA testing | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1249768&theme=light&t=1789423052270"></a>
+</p>
+
 ---
 
 ## See it in action
