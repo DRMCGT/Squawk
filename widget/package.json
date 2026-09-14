@@ -48,7 +48,6 @@
     "test:watch": "vitest",
     "check:size": "node scripts/check-size.mjs",
     "check": "npm run build && npm test && npm run check:size",
-    "prepare": "npm run build",
     "prepublishOnly": "npm run check"
   },
   "engines": {
