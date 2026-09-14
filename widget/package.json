@@ -53,12 +53,12 @@
   "engines": {
     "node": ">=18"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "esbuild": "^0.25.0",
     "jsdom": "^26.0.0",
     "vitest": "^3.0.0"
-  },
-  "dependencies": {
-    "playwright": "^1.63.0"
   }
 }
