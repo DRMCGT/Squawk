@@ -18,6 +18,24 @@
 
 ---
 
+## See it in action
+
+<p align="center">
+  <img src="assets/branding/cli-demo.gif" alt="The Go CLI capturing a bug in squawk watch" width="720">
+  <br>
+  <em>The Go CLI capturing a bug in <code>squawk watch</code></em>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/branding/widget-demo.gif" alt="The web widget picking an element and exporting the report" width="720">
+  <br>
+  <em>The web widget picking an element and exporting the report</em>
+</p>
+
+---
+
 Squawk is an open-source QA tool for developers doing manual or exploratory
 testing. The moment you spot a bug, you "squawk" it: Squawk captures the
 context a coding agent needs to fix it — a screenshot, recent device or
