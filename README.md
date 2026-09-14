@@ -119,12 +119,17 @@ make install    # -> ~/.local/bin/squawk
 
 ### Web Widget
 
-The widget is not published to npm yet; consume it from this repository
-(`widget/`). From your web app:
+The widget is not published to the npm registry yet. Install it straight from
+this repository's `widget/` directory with pnpm, which supports installing a
+package from a Git subdirectory:
 
 ```bash
-npm install /path/to/Squawk/widget
+pnpm add "github:DRMCGT/Squawk#path:widget"
 ```
+
+The built `dist/` bundles are committed, so there is no build step on your
+side. npm and Yarn do not support the `#path:` subdirectory syntax; if you use
+them, install the package from a local clone or wait for the registry release.
 
 Import and mount it in development only:
 
